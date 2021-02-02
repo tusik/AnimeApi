@@ -18,9 +18,9 @@ pub mod api{
         println!("{}",full_name);
         let img_data = tokio::fs::read(full_name).await.unwrap();
         let mut content_type = "image/jpeg";
-        if ext.eq("png"){
+        if *ext=="png"{
             content_type = "image/png";
-        }else if ext.eq("jpg"){
+        }else if *ext=="jpg"{
             content_type = "image/jpeg";
         }
         let resp = Response::builder().header("content-type",content_type)
