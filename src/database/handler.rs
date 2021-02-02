@@ -1,10 +1,9 @@
 pub mod handler{
     use mongodb::{Client, bson};
     use mongodb::bson::doc;
-    use mongodb::options::AggregateOptions;
     use futures::stream::StreamExt;
     use crate::entity::image_detail::image_detail::ImageDetail;
-    use crate::entity::config::config::{SystemConfig, CONFIG};
+    use crate::entity::config::config::{ CONFIG};
 
     static mut CLIENT:Option<Client> = None;
     pub async fn sample_one() -> Option<ImageDetail> {
@@ -21,9 +20,10 @@ pub mod handler{
                     let pipeline = vec![
                         doc!{
                             "$match":{
-                                "file_url":{"$regex":"jpg$"},
+                                "file_url":{"$regex":"(jpg|png)$"},
                                 "created_at":{"$gt":1420041600},
-                                "rating":"s"
+                                "rating":"s",
+                                "file_size":{"$lt":5*1024*1024}
                             }
                         },
                         doc!{
@@ -37,8 +37,9 @@ pub mod handler{
                         match result {
                             Ok(document)=>{
                                 image = Some(bson::from_document(document).unwrap());
+                                println!("{:?}",&image);
                             },
-                            Err(e)=>{}
+                            Err(_)=>{}
                         }
 
                     }

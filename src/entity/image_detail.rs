@@ -4,6 +4,7 @@ pub mod image_detail{
     #[derive(Debug,Serialize,Deserialize)]
     pub struct ImageDetail{
         pub(crate) file_url:String,
-        pub(crate) md5:String
+        pub(crate) md5:String,
+        pub(crate) tags:Vec<String>
     }
 }
