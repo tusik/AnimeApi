@@ -6,7 +6,7 @@ pub mod handler{
     use crate::entity::config::config::{ CONFIG};
 
     static mut CLIENT:Option<Client> = None;
-    pub async fn sample_one() -> Option<ImageDetail> {
+    pub async fn sample_one(nin_tags:Option<Vec<&str>>) -> Option<ImageDetail> {
         let mut image = None;
         unsafe {
             if CLIENT.is_none(){
@@ -17,13 +17,18 @@ pub mod handler{
                 Some(client) => {
                     let db = client.database("anime");
                     let col = db.collection("artwork");
+                    let mut nin = vec![""];
+                    if nin_tags.is_some() {
+                        nin = nin_tags.unwrap();
+                    }
                     let pipeline = vec![
                         doc!{
                             "$match":{
                                 "file_url":{"$regex":"(jpg|png)$"},
                                 "created_at":{"$gt":1420041600},
                                 "rating":"s",
-                                "file_size":{"$lt":5*1024*1024}
+                                "file_size":{"$lt":5*1024*1024},
+                                "tags":{"$nin":nin}
                             }
                         },
                         doc!{
