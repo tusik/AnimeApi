@@ -21,7 +21,8 @@ pub mod handler{
                     let pipeline = vec![
                         doc!{
                             "$match":{
-                                "file_url":{"$regex":"jpg$"}
+                                "file_url":{"$regex":"jpg$"},
+                                "created_at":{"$gt":1420041600}
                             }
                         },
                         doc!{

@@ -16,8 +16,14 @@ pub mod api{
         let ext = ext_tmp.last().unwrap();
         let full_name = format!("/home/images_opt/{}/{}_optmized.{}",&md5[0..2],&md5,ext);
         println!("{}",full_name);
-        let img_data = tokio::fs::read("C:\\Users\\Image\\Pictures\\微信图片_20201209135523.jpg").await.unwrap();
-        let resp = Response::builder().header("content-type","image/jpeg")
+        let img_data = tokio::fs::read(full_name).await.unwrap();
+        let mut content_type = "image/jpeg";
+        if ext.eq("png"){
+            content_type = "image/png";
+        }else if ext.eq("jpg"){
+            content_type = "image/jpeg";
+        }
+        let resp = Response::builder().header("content-type",content_type)
             .body(img_data).unwrap();
         Ok(resp)
     }
