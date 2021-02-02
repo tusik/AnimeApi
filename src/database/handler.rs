@@ -22,7 +22,8 @@ pub mod handler{
                         doc!{
                             "$match":{
                                 "file_url":{"$regex":"jpg$"},
-                                "created_at":{"$gt":1420041600}
+                                "created_at":{"$gt":1420041600},
+                                "rating":"s"
                             }
                         },
                         doc!{
