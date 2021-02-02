@@ -1,15 +1,19 @@
 pub mod config{
     use serde::Serialize;
     use serde::Deserialize;
-    pub static mut CONFIG:Option<SystemConfig> = None;
+    pub static mut CONFIG:Option<Config> = None;
+    #[derive(Debug,Serialize,Deserialize)]
+    pub struct Config{
+        pub system:SystemConfig
+    }
     #[derive(Debug,Serialize,Deserialize)]
     pub struct SystemConfig{
-        pub(crate) mongo_uri:String
+        pub mongo_uri:String
     }
-    impl SystemConfig{
+    impl Config{
         pub async fn load() {
             let config_file = tokio::fs::read_to_string("./config.toml").await;
-            let c:SystemConfig;
+            let c:Config;
             match config_file {
                 Ok(content) => {
                     c = toml::from_str(content.as_str()).unwrap();

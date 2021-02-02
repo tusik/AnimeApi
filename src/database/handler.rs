@@ -11,7 +11,7 @@ pub mod handler{
         let mut image = None;
         unsafe {
             if CLIENT.is_none(){
-                CLIENT = Some(Client::with_uri_str(CONFIG.as_ref().unwrap().mongo_uri.as_str()).await.unwrap());
+                CLIENT = Some(Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str()).await.unwrap());
             }
             match &CLIENT {
                 None => {}
