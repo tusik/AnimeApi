@@ -28,10 +28,14 @@ pub mod api{
             None => {}
             Some(mode) => match mode.as_ref(){
                 "preview"=>{
-                    full_name = format!("/home/images_preview/{}/{}_optmized.{}",&md5[0..2],&md5,ext);
+                    if image.width > 150{
+                        full_name = format!("/home/images_preview/{}/{}_optmized.{}",&md5[0..2],&md5,ext);
+                    }
                 }
                 "middle"=>{
-                    full_name = format!("/home/images_middle/{}/{}_optmized.{}",&md5[0..2],&md5,ext);
+                    if image.width > 1500 {
+                        full_name = format!("/home/images_middle/{}/{}_optmized.{}", &md5[0..2], &md5, ext);
+                    }
                 }
                 &_ => {}
             }
