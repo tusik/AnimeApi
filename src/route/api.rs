@@ -23,7 +23,19 @@ pub mod api{
         let tmp_string:Vec<&str> = image.file_url.split("/").collect();
         let ext_tmp:Vec<&str> = tmp_string.last().unwrap().split(".").collect();
         let ext = ext_tmp.last().unwrap();
-        let full_name = format!("/home/images_opt/{}/{}_optmized.{}",&md5[0..2],&md5,ext);
+        let mut full_name = format!("/home/images_opt/{}/{}_optmized.{}", &md5[0..2], &md5, ext);
+        match params.get("size"){
+            None => {}
+            Some(mode) => match mode.as_ref(){
+                "preview"=>{
+                    full_name = format!("/home/images_preview/{}/{}_optmized.{}",&md5[0..2],&md5,ext);
+                }
+                "middle"=>{
+                    full_name = format!("/home/images_middle/{}/{}_optmized.{}",&md5[0..2],&md5,ext);
+                }
+                &_ => {}
+            }
+        }
         println!("{}",full_name);
         let img_data = tokio::fs::read(full_name).await.unwrap();
         let mut content_type = "image/jpeg";
