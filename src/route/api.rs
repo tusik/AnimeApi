@@ -1,7 +1,7 @@
 pub mod api{
     use crate::database::handler::handler::sample_one;
     use warp::{Filter, Rejection};
-    use warp::http::Response;
+    use warp::http::{Response};
     use std::collections::HashMap;
 
     pub fn api_sample() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone{
@@ -40,15 +40,20 @@ pub mod api{
                 &_ => {}
             }
         }
-        println!("{}",full_name);
+        // println!("{}",full_name);
         let img_data = tokio::fs::read(full_name).await.unwrap();
+        // let img_data = vec![11];
         let mut content_type = "image/jpeg";
         if *ext=="png"{
             content_type = "image/png";
         }else if *ext=="jpg"{
             content_type = "image/jpeg";
         }
-        let resp = Response::builder().header("content-type",content_type)
+        let resp = Response::builder()
+            .header("content-type",content_type)
+            .header("source",image.source)
+            .header("author",image.author)
+            .header("id",image._id)
             .body(img_data).unwrap();
         Ok(resp)
     }

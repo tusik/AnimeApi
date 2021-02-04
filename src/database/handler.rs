@@ -2,6 +2,7 @@ pub mod handler{
     use mongodb::{Client, bson};
     use mongodb::bson::doc;
     use futures::stream::StreamExt;
+    use log::info;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::config::config::{ CONFIG};
 
@@ -42,7 +43,7 @@ pub mod handler{
                         match result {
                             Ok(document)=>{
                                 image = Some(bson::from_document(document).unwrap());
-                                println!("{:?}",&image);
+                                info!("{:?}",&image);
                             },
                             Err(_)=>{}
                         }

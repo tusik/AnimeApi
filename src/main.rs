@@ -19,6 +19,10 @@ async fn main() {
                                  None,
                                  true
     );
+    match log_res{
+        Ok(_) => {}
+        Err(_) => {}
+    }
     Config::load().await;
     println!("Hello, world!");
     warp::serve(api_sample())
