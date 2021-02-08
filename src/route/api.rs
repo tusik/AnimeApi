@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub mod api{
     use crate::database::handler::handler::sample_one;
     use warp::{Filter, Rejection};
@@ -10,6 +11,9 @@ pub mod api{
             .and(warp::query::<HashMap<String, String>>())
             .and_then(sample_image)
     }
+    pub fn read_img(){
+
+    }
     pub async fn sample_image(params: HashMap<String, String>) -> Result<Response<Vec<u8>>, Rejection> {
         let mut nin:Option<Vec<&str>> = None;
         match params.get("nin"){
@@ -18,7 +22,7 @@ pub mod api{
                 nin = Some(item.split(",").collect());
             }
         }
-        let image = sample_one(nin).await.unwrap();
+        let image = sample_one(params.get("id"),nin).await.unwrap();
         let md5 = image.md5;
         let tmp_string:Vec<&str> = image.file_url.split("/").collect();
         let ext_tmp:Vec<&str> = tmp_string.last().unwrap().split(".").collect();
@@ -40,9 +44,7 @@ pub mod api{
                 &_ => {}
             }
         }
-        // println!("{}",full_name);
         let img_data = tokio::fs::read(full_name).await.unwrap();
-        // let img_data = vec![11];
         let mut content_type = "image/jpeg";
         if *ext=="png"{
             content_type = "image/png";
@@ -51,9 +53,9 @@ pub mod api{
         }
         let resp = Response::builder()
             .header("content-type",content_type)
-            .header("source",image.source)
-            .header("author",image.author)
-            .header("id",image._id)
+            .header("image_id",image._id)
+            .header("image_source",image.source)
+            .header("image_tags",image.tags.join(","))
             .body(img_data).unwrap();
         Ok(resp)
     }

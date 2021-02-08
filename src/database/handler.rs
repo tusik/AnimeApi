@@ -7,23 +7,31 @@ pub mod handler{
     use crate::entity::config::config::{ CONFIG};
 
     static mut CLIENT:Option<Client> = None;
-    pub async fn sample_one(nin_tags:Option<Vec<&str>>) -> Option<ImageDetail> {
+    pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>) -> Option<ImageDetail> {
         let mut image = None;
         unsafe {
             if CLIENT.is_none(){
                 CLIENT = Some(Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str()).await.unwrap());
             }
+            let mut cursor;
             match &CLIENT {
                 None => {}
                 Some(client) => {
                     let db = client.database("anime");
                     let col = db.collection("artwork");
-                    let mut nin = vec![""];
-                    if nin_tags.is_some() {
-                        nin = nin_tags.unwrap();
-                    }
-                    let pipeline = vec![
-                        doc!{
+                    if id.is_some(){
+                        let find = doc!{
+                                "_id":id.unwrap()
+                        };
+                        cursor = col.find(find, None).await.unwrap();
+
+                    }else{
+                        let mut nin = vec![""];
+                        if nin_tags.is_some() {
+                            nin = nin_tags.unwrap();
+                        }
+                        let pipeline = vec![
+                            doc!{
                             "$match":{
                                 "file_url":{"$regex":"(jpg|png)$"},
                                 "created_at":{"$gt":1420041600},
@@ -32,13 +40,15 @@ pub mod handler{
                                 "tags":{"$nin":nin}
                             }
                         },
-                        doc!{
+                            doc!{
                             "$sample":{
                                 "size":1
                             }
                         }
-                    ];
-                    let mut cursor = col.aggregate(pipeline,None).await.unwrap();
+                        ];
+                        cursor = col.aggregate(pipeline,None).await.unwrap();
+                    }
+
                     if let Some(result) = cursor.next().await{
                         match result {
                             Ok(document)=>{
