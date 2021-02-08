@@ -21,7 +21,7 @@ pub mod handler{
                     let col = db.collection("artwork");
                     if id.is_some(){
                         let find = doc!{
-                                "_id":id.unwrap()
+                                "_id":id.unwrap().parse::<u32>().unwrap()
                         };
                         cursor = col.find(find, None).await.unwrap();
 
