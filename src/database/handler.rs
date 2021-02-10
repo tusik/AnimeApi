@@ -26,9 +26,9 @@ pub mod handler{
                         cursor = col.find(find, None).await.unwrap();
 
                     }else{
-                        let mut nin = vec![""];
+                        let mut nin = vec!["nipples","nude","pussy","pussy_juice","uncensored","breasts"];
                         if nin_tags.is_some() {
-                            nin = nin_tags.unwrap();
+                            nin.extend(nin_tags.unwrap().iter());
                         }
                         let pipeline = vec![
                             doc!{
@@ -37,7 +37,7 @@ pub mod handler{
                                 "created_at":{"$gt":1420041600},
                                 "rating":"s",
                                 "file_size":{"$lt":5*1024*1024},
-                                "tags":{"$nin":nin}
+                                "rating_on_ml":{"$nin":["e","q"]}
                             }
                         },
                             doc!{
