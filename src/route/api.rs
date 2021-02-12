@@ -28,22 +28,22 @@ pub mod api{
         let tmp_string:Vec<&str> = image.file_url.split("/").collect();
         let ext_tmp:Vec<&str> = tmp_string.last().unwrap().split(".").collect();
         let ext = ext_tmp.last().unwrap();
-        let mut path_prefix ="";
+        let mut path_prefix;
         unsafe {
-            path_prefix =  &CONFIG.unwrap().system.path;
+            path_prefix =  CONFIG.as_ref().unwrap().system.path.as_str();
         }
-        let mut full_name = format!("{}/images_opt/{}/{}_optmized.{}",path_prefix, &md5[0..2], &md5, ext);
+        let mut full_name = format!("{}/images_opt/{}/{}_optmized.{}",&path_prefix, &md5[0..2], &md5, ext);
         match params.get("size"){
             None => {}
             Some(mode) => match mode.as_ref(){
                 "preview"=>{
                     if image.width > 150{
-                        full_name = format!("{}/images_preview/{}/{}_optmized.{}",path_prefix,&md5[0..2],&md5,ext);
+                        full_name = format!("{}/images_preview/{}/{}_optmized.{}",&path_prefix,&md5[0..2],&md5,ext);
                     }
                 }
                 "middle"=>{
                     if image.width > 1500 {
-                        full_name = format!("{}/images_middle/{}/{}_optmized.{}",path_prefix, &md5[0..2], &md5, ext);
+                        full_name = format!("{}/images_middle/{}/{}_optmized.{}",&path_prefix, &md5[0..2], &md5, ext);
                     }
                 }
                 &_ => {}
