@@ -8,7 +8,8 @@ pub mod config{
     }
     #[derive(Debug,Serialize,Deserialize)]
     pub struct SystemConfig{
-        pub mongo_uri:String
+        pub mongo_uri:String,
+        pub path:String
     }
     impl Config{
         pub async fn load() {
