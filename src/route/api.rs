@@ -51,7 +51,7 @@ pub mod api{
         let img_res =  tokio::fs::read(full_name).await;
         match &img_res {
             Ok(d)=>{
-                img_data.clone_from_slice(d.as_slice());
+                img_data.extend_from_slice(d.as_slice());
                 return Ok(img_data.len());
             },
             _ => {}
