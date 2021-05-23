@@ -36,7 +36,7 @@ pub mod handler{
                                 "file_url":{"$regex":"(jpg|png)$"},
                                 "created_at":{"$gt":1420041600},
                                 "rating":"s",
-                                "file_size":{"$lt":5*1024*1024},
+                                "file_size":{"$lt":6*1024*1024},
                                 "rating_on_ml":{"$nin":["e","q"]}
                             }
                         },
