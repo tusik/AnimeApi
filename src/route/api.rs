@@ -5,7 +5,6 @@ pub mod api{
     use warp::http::{Response};
     use std::collections::HashMap;
     use crate::entity::config::config::{ CONFIG};
-    use std::io;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use serde_json;
     pub fn api_sample() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone{
@@ -27,7 +26,7 @@ pub mod api{
         let tmp_string:Vec<&str> = image.file_url.split("/").collect();
         let ext_tmp:Vec<&str> = tmp_string.last().unwrap().split(".").collect();
         let ext = ext_tmp.last().unwrap();
-        let mut path_prefix;
+        let path_prefix;
         unsafe {
             path_prefix =  CONFIG.as_ref().unwrap().system.path.as_str();
         }
@@ -103,7 +102,7 @@ pub mod api{
 
         while read_image(&mut img_data, &image,params.get("size")).await.is_err() {}
 
-        let mut content_type= get_content_type(ext);
+        let content_type= get_content_type(ext);
         let resp = Response::builder()
             .header("content-type",content_type)
             .header("image_id",image._id)

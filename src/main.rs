@@ -4,9 +4,13 @@ use fast_log::init_split_log;
 use fast_log::consts::LogSize;
 use fast_log::plugin::file_split::RollingType;
 use warp::{Filter};
+use crate::route::main_page::main_page::{index_static, css_static};
+
 mod database;
 mod entity;
 mod route;
+
+
 #[tokio::main]
 async fn main() {
     tokio::fs::create_dir_all("logs/").await.unwrap();
@@ -25,7 +29,11 @@ async fn main() {
     }
     Config::load().await;
     println!("Hello, world!");
-    let routes = api_sample_post().or(api_sample());
+    let routes =
+        api_sample_post()
+        .or(api_sample())
+        .or(index_static())
+        .or(css_static());
     warp::serve(routes)
         .run(([0,0,0,0],3030))
         .await;
