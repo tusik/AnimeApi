@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 mongodb = "2.0.0-alpha"
 tokio = { version = "1", features = ["full"] }
-warp = "0.3"
+warp = "0.3.1"
 headers = "0.3.3"
 serde = "1.0.123"
 serde_json = "1.0"

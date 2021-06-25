@@ -37,6 +37,7 @@ pub mod handler{
                                 "created_at":{"$gt":1420041600},
                                 "rating":"s",
                                 "file_size":{"$lt":6*1024*1024},
+                                "cdn":"cos",
                                 "rating_on_ml":{"$nin":["e","q"]}
                             }
                         },

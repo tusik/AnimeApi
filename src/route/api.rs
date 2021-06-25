@@ -1,12 +1,14 @@
 #[allow(dead_code)]
 pub mod api{
     use crate::database::handler::handler::sample_one;
-    use warp::{Filter, Rejection};
-    use warp::http::{Response};
+    use warp::{Filter, Rejection, Reply};
+    use warp::http::{Response, Uri};
     use std::collections::HashMap;
     use crate::entity::config::config::{ CONFIG};
     use crate::entity::image_detail::image_detail::ImageDetail;
     use serde_json;
+    use std::str::FromStr;
+
     pub fn api_sample() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone{
         warp::get()
             .and(warp::path("image"))
@@ -19,6 +21,12 @@ pub mod api{
             .and(warp::path("image"))
             .and(warp::query::<HashMap<String, String>>())
             .and_then(sample_image_post)
+    }
+    pub fn api_sample_red_post() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone{
+        warp::get()
+            .and(warp::path("images"))
+            .and(warp::query::<HashMap<String, String>>())
+            .and_then(sample_image_redirect)
     }
 
     pub async fn read_image(img_data: &mut Vec<u8>, image:&ImageDetail, size:Option<&String>) -> Result<usize,usize>{
@@ -96,7 +104,7 @@ pub mod api{
         }
         let image = sample_one(params.get("id"),nin).await.unwrap();
 
-        let ext = get_content_type(image.file_url.as_str());
+        let ext = get_file_ext(image.file_url.as_str());
 
         let mut img_data = vec![];
 
@@ -110,5 +118,22 @@ pub mod api{
             .header("image_tags",image.tags.join(","))
             .body(img_data).unwrap();
         Ok(resp)
+    }
+    pub async fn sample_image_redirect(params: HashMap<String, String>) -> Result<impl warp::Reply, warp::Rejection> {
+        let mut nin:Option<Vec<&str>> = None;
+        match params.get("nin"){
+            None => {}
+            Some(item) => {
+                nin = Some(item.split(",").collect());
+            }
+        }
+        let image = sample_one(params.get("id"),nin).await.unwrap();
+
+        let ext = get_file_ext(image.file_url.as_str());
+        let mut  target_link:String = "http://cdn.img.heap.run/".to_string();
+        target_link+= &image.md5;
+        target_link+= &"_optmized.".to_string();
+        target_link+=ext;
+        Ok(warp::redirect::temporary(Uri::from_str(target_link.as_str()).unwrap()))
     }
 }
