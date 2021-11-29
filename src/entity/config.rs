@@ -9,7 +9,9 @@ pub mod config{
     #[derive(Debug,Serialize,Deserialize)]
     pub struct SystemConfig{
         pub mongo_uri:String,
-        pub path:String
+        pub path:String,
+        pub origin_img:String,
+        pub preview_img:String
     }
     impl Config{
         pub async fn load() {
