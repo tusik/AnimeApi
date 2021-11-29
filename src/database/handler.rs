@@ -34,11 +34,11 @@ pub mod handler{
                             doc!{
                             "$match":{
                                 "file_url":{"$regex":"(jpg|png)$"},
-                                "created_at":{"$gt":1420041600},
-                                "rating":"s",
-                                "file_size":{"$lt":6*1024*1024},
+                                "created_at":{"$gt":1506787200},
+                                "file_size":{"$lt":10*1024*1024},
+                                "file_size":{"$gt":500*1024},
                                 "cdn":"cos",
-                                "rating_on_ml":{"$nin":["e","q"]}
+                                "rating_on_ml":"s"}
                             }
                         },
                             doc!{
