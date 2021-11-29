@@ -35,15 +35,19 @@ pub mod api{
         let ext_tmp:Vec<&str> = tmp_string.last().unwrap().split(".").collect();
         let ext = ext_tmp.last().unwrap();
         let path_prefix;
+        let origin_prefix;
+        let preview_prefix;
         unsafe {
             path_prefix =  CONFIG.as_ref().unwrap().system.path.as_str();
+            origin_prefix =  CONFIG.as_ref().unwrap().system.origin_img.as_str();
+            preview_prefix =  CONFIG.as_ref().unwrap().system.preview_img.as_str();
         }
-        let mut full_name = format!("{}/images_opt/{}/{}_optmized.{}",&path_prefix, &md5[0..2], &md5, ext);
+        let mut full_name = format!("{}/{}/{}/{}.{}",&path_prefix,&origin_prefix, &md5[0..2], &md5, ext);
         match size{
             Some(s)=> match s.as_str(){
                 "preview"=>{
                     if image.width > 150{
-                        full_name = format!("{}/images_preview/{}/{}_optmized.{}",&path_prefix,&md5[0..2],&md5,ext);
+                        full_name = format!("{}/{}/{}/{}_optmized.{}",&path_prefix,&preview_prefix,&md5[0..2],&md5,ext);
                     }
                 }
                 "middle"=>{
