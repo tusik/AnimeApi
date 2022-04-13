@@ -13,7 +13,7 @@ pub mod api{
         warp::get()
             .and(warp::path("image"))
             .and(warp::query::<HashMap<String, String>>())
-            .and_then(sample_image_redirect)
+            .and_then(sample_image)
     }
 
     pub fn api_sample_post() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone{
