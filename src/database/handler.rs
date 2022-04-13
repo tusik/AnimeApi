@@ -37,7 +37,7 @@ pub mod handler{
                                 "created_at":{"$gt":1506787200},
                                 "file_size":{"$lt":10*1024*1024},
                                 "file_size":{"$gt":500*1024},
-                                "rating_on_ml":"s"}
+                                "rating_on_ml":"s"
                             }
                         },
                             doc!{

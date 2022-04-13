@@ -134,9 +134,11 @@ pub mod api{
         let image = sample_one(params.get("id"),nin).await.unwrap();
 
         let ext = get_file_ext(image.file_url.as_str());
-        let mut  target_link:String = "http://cdn.img.heap.run/".to_string();
+        let mut  target_link:String = "https://b2.pic.re/".to_string();
+        target_link+= &image.md5[0..2];
+	target_link+= "/";
         target_link+= &image.md5;
-        target_link+= &"_optmized.".to_string();
+	target_link+=".";
         target_link+=ext;
         Ok(warp::redirect::temporary(Uri::from_str(target_link.as_str()).unwrap()))
     }
