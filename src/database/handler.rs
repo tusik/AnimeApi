@@ -51,7 +51,7 @@ pub mod handler{
                                 }
                                 pipeline.push(hor_value);
                             },
-                            None => todo!(),
+                            None => {},
                         }
                         pipeline.push(doc!{
                             "$sample":{
