@@ -7,7 +7,7 @@ pub mod handler{
     use crate::entity::config::config::{ CONFIG};
 
     static mut CLIENT:Option<Client> = None;
-    pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>) -> Option<ImageDetail> {
+    pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>) -> Option<ImageDetail> {
         let mut image = None;
         unsafe {
             if CLIENT.is_none(){
@@ -30,22 +30,34 @@ pub mod handler{
                         if nin_tags.is_some() {
                             nin.extend(nin_tags.unwrap().iter());
                         }
-                        let pipeline = vec![
+                        let mut pipeline = vec![
                             doc!{
-                            "$match":{
-                                "file_url":{"$regex":"(jpg|png)$"},
-                                "created_at":{"$gt":1506787200},
-                                "file_size":{"$lt":10*1024*1024},
-                                "file_size":{"$gt":500*1024},
-                                "rating_on_ml":"s"
+                                "$match":{
+                                    "file_url":{"$regex":"(jpg|png)$"},
+                                    "created_at":{"$gt":1506787200},
+                                    "file_size":{"$lt":10*1024*1024},
+                                    "file_size":{"$gt":500*1024},
+                                    "rating_on_ml":"s"
+                                }
                             }
-                        },
-                            doc!{
+                        ];
+                        match horizontal {
+                            Some(hor) => {
+                                let hor_value;
+                                if hor {
+                                    hor_value = doc! {"$expr":{"$gt":["jpeg_width","jpeg_height"]}};
+                                }else{
+                                    hor_value = doc! {"$expr":{"$gt":["jpeg_height","jpeg_width"]}};
+                                }
+                                pipeline.push(hor_value);
+                            },
+                            None => todo!(),
+                        }
+                        pipeline.push(doc!{
                             "$sample":{
                                 "size":1
                             }
-                        }
-                        ];
+                        });
                         cursor = col.aggregate(pipeline,None).await.unwrap();
                     }
 

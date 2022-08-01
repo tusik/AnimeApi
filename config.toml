@@ -1,0 +1,3 @@
+[system]
+mongo_uri="mongodb://anime:animation_PassWoRd@144.76.34.115:27007/?authSource=anime"
+path=''
