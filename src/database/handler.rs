@@ -1,12 +1,52 @@
 pub mod handler{
-    use mongodb::{Client, bson};
-    use mongodb::bson::doc;
+    use mongodb::{Client, bson, Collection};
+    use mongodb::bson::{doc, Document};
     use futures::stream::StreamExt;
     use log::info;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::config::config::{ CONFIG};
 
     static mut CLIENT:Option<Client> = None;
+    pub async fn image_count() -> Option<i64>{
+        unsafe{
+            if CLIENT.is_none(){
+                None
+            }else{
+                match &CLIENT {
+                    Some(client) => {
+                        let db = client.database("anime");
+                        let col: Collection<Document> = db.collection("artwork");
+                        let pipeline = vec![
+                            doc! {
+                                "$match":{
+                                    "rating_on_ml":"s"
+                                }
+                            },
+                            doc!{
+                                "$count":"md5"
+                            }
+                        ];
+                        let mut cur = col.aggregate(pipeline,None).await.unwrap();
+                        if let Some(result) = cur.next().await{
+                            match result {
+                                Ok(document)=>{
+                                    let size = document
+                                    .get_i64("md5")
+                                    .expect("Error loading size");
+                                    return Some(size);
+                                },
+                                Err(_)=>{}
+                            }
+    
+                        }
+                    }
+                    None => {return None;},
+                }
+                return Some(0)
+            }
+        }
+        
+    }
     pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>) -> Option<ImageDetail> {
         let mut image = None;
         unsafe {

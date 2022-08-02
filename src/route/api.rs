@@ -1,6 +1,6 @@
 #[allow(dead_code)]
 pub mod api{
-    use crate::database::handler::handler::sample_one;
+    use crate::database::handler::handler::{sample_one, image_count};
     use warp::{Filter, Rejection};
     use warp::http::{Response, Uri};
     use std::collections::HashMap;
@@ -33,6 +33,18 @@ pub mod api{
             .and(warp::path("images.json"))
             .and(warp::query::<HashMap<String, String>>())
             .and_then(sample_image_post)
+    }
+    pub fn api_server_status() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone{
+        warp::get()
+        .and(warp::path("status"))
+        .and_then(server_status)
+    }
+    pub async fn server_status() -> Result<Response<String>, Rejection> {
+        let size = image_count().await;
+        let resp = Response::builder()
+            .header("content-type","application/json")
+            .body(format!("{{\"size\":{:}}}",size.unwrap())).unwrap();
+        Ok(resp)
     }
     pub async fn read_image(img_data: &mut Vec<u8>, image:&ImageDetail, size:Option<&String>) -> Result<usize,usize>{
         let md5 = image.md5.clone();
