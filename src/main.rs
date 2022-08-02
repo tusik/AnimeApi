@@ -1,4 +1,4 @@
-use crate::route::api::api::{api_sample, api_sample_post, api_sample_red_post, api_sample_json};
+use crate::route::api::api::{api_sample, api_sample_post, api_sample_red_post, api_sample_json, api_server_status};
 use crate::entity::config::config::Config;
 use fast_log::plugin::file_split::RollingType;
 use fast_log::consts::LogSize;
@@ -31,6 +31,7 @@ async fn main() {
         .or(api_sample_red_post())
         .or(api_sample_json())
         .or(api_sample())
+        .or(api_server_status())
         .or(index_static())
         .or(css_static())
         .or(image_static);
