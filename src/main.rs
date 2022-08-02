@@ -1,5 +1,5 @@
-use crate::route::api::api::{api_sample, api_sample_post, api_sample_red_post};
-use crate::entity::config::config::{Config};
+use crate::route::api::api::{api_sample, api_sample_post, api_sample_red_post, api_sample_json};
+use crate::entity::config::config::Config;
 use fast_log::plugin::file_split::RollingType;
 use fast_log::consts::LogSize;
 use fast_log::plugin::packer::LogPacker;
@@ -29,6 +29,7 @@ async fn main() {
     let routes =
         api_sample_post()
         .or(api_sample_red_post())
+        .or(api_sample_json())
         .or(api_sample())
         .or(index_static())
         .or(css_static())
