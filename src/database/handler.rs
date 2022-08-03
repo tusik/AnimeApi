@@ -7,7 +7,7 @@ pub mod handler{
     use crate::entity::config::config::{ CONFIG};
 
     static mut CLIENT:Option<Client> = None;
-    pub async fn image_count() -> Option<i64>{
+    pub async fn image_count() -> Option<i32>{
         unsafe{
             if CLIENT.is_none(){
                 CLIENT = Some(Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str()).await.unwrap());
@@ -23,18 +23,15 @@ pub mod handler{
                             }
                         },
                         doc!{
-                            "$count":"md5"
+                            "$count":"source"
                         }
                     ];
                     let mut cur = col.aggregate(pipeline,None).await.unwrap();
                     if let Some(result) = cur.next().await{
                         match result {
                             Ok(document)=>{
-                                print!("{}",&document);
-                                let size = document
-                                .get_i64("md5")
-                                .expect("Error loading size");
-                                return Some(size);
+                                
+                                return Some(document.get_i32("source").unwrap());
                             },
                             Err(_)=>{}
                         }
