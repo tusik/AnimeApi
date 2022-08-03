@@ -10,41 +10,42 @@ pub mod handler{
     pub async fn image_count() -> Option<i64>{
         unsafe{
             if CLIENT.is_none(){
-                None
-            }else{
-                match &CLIENT {
-                    Some(client) => {
-                        let db = client.database("anime");
-                        let col: Collection<Document> = db.collection("artwork");
-                        let pipeline = vec![
-                            doc! {
-                                "$match":{
-                                    "rating_on_ml":"s"
-                                }
-                            },
-                            doc!{
-                                "$count":"md5"
-                            }
-                        ];
-                        let mut cur = col.aggregate(pipeline,None).await.unwrap();
-                        if let Some(result) = cur.next().await{
-                            match result {
-                                Ok(document)=>{
-                                    let size = document
-                                    .get_i64("md5")
-                                    .expect("Error loading size");
-                                    return Some(size);
-                                },
-                                Err(_)=>{}
-                            }
-    
-                        }
-                    }
-                    None => {return None;},
-                }
-                return Some(0)
+                CLIENT = Some(Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str()).await.unwrap());
             }
+            match &CLIENT {
+                Some(client) => {
+                    let db = client.database("anime");
+                    let col: Collection<Document> = db.collection("artwork");
+                    let pipeline = vec![
+                        doc! {
+                            "$match":{
+                                "rating_on_ml":"s"
+                            }
+                        },
+                        doc!{
+                            "$count":"md5"
+                        }
+                    ];
+                    let mut cur = col.aggregate(pipeline,None).await.unwrap();
+                    if let Some(result) = cur.next().await{
+                        match result {
+                            Ok(document)=>{
+                                print!("{}",&document);
+                                let size = document
+                                .get_i64("md5")
+                                .expect("Error loading size");
+                                return Some(size);
+                            },
+                            Err(_)=>{}
+                        }
+
+                    }
+                }
+                None => {return None;},
+            }
+            return Some(0)
         }
+        
         
     }
     pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>) -> Option<ImageDetail> {
