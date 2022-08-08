@@ -1,6 +1,7 @@
 #[allow(dead_code)]
 pub mod api{
-    use crate::database::handler::handler::{sample_one, image_count};
+    use crate::database::handler::handler::{sample_one, image_count, last_time};
+    use crate::entity::status::status::ServerStatus;
     use warp::{Filter, Rejection};
     use warp::http::{Response, Uri};
     use std::collections::HashMap;
@@ -40,10 +41,13 @@ pub mod api{
         .and_then(server_status)
     }
     pub async fn server_status() -> Result<Response<String>, Rejection> {
+        let mut status = ServerStatus::new();
         let size = image_count().await;
+        status.data.size = size.unwrap_or(0);
+        status.data.lastUpdate = last_time().await;
         let resp = Response::builder()
             .header("content-type","application/json")
-            .body(format!("{{\"size\":{:}}}",size.unwrap())).unwrap();
+            .body(format!("{:?}",status)).unwrap();
         Ok(resp)
     }
     pub async fn read_image(img_data: &mut Vec<u8>, image:&ImageDetail, size:Option<&String>) -> Result<usize,usize>{

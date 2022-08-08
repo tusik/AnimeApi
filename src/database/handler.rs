@@ -7,7 +7,7 @@ pub mod handler{
     use crate::entity::config::config::{ CONFIG};
 
     static mut CLIENT:Option<Client> = None;
-    pub async fn image_count() -> Option<i32>{
+    pub async fn image_count() -> Option<u64>{
         unsafe{
             if CLIENT.is_none(){
                 CLIENT = Some(Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str()).await.unwrap());
@@ -31,7 +31,7 @@ pub mod handler{
                         match result {
                             Ok(document)=>{
                                 
-                                return Some(document.get_i32("source").unwrap());
+                                return Some(document.get_i64("source").unwrap_or(0) as u64);
                             },
                             Err(_)=>{}
                         }
@@ -43,8 +43,43 @@ pub mod handler{
             return Some(0)
         }
         
-        
     }
+
+    pub async fn last_time() -> bson::DateTime{
+        unsafe{
+            if CLIENT.is_none(){
+                CLIENT = Some(Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str()).await.unwrap());
+            }
+            match &CLIENT {
+                Some(client) => {
+                    let db = client.database("anime");
+                    let col: Collection<Document> = db.collection("artwork");
+                    let pipeline = vec![
+                        doc!{
+                            "$sort":{
+                                "created_at": -1i32
+                            }
+                        },
+                        doc!{
+                            "$limit":1i32
+                        }
+                    ];
+                    let mut cur = col.aggregate(pipeline,None).await.unwrap();
+                    if let Some(result) = cur.next().await{
+                        match result {
+                            Ok(document)=>{
+                                return bson::DateTime::from_millis(document.get_i32("created_at").unwrap().into());
+                            },
+                            Err(_)=>{return bson::DateTime::from_millis(0);}
+                        }
+                    }
+                },
+                None => {return bson::DateTime::from_millis(0);},
+            }
+            return bson::DateTime::from_millis(0);
+        }
+    }
+
     pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>) -> Option<ImageDetail> {
         let mut image = None;
         unsafe {
