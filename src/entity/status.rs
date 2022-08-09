@@ -3,8 +3,8 @@ pub mod status{
 
     #[derive(Debug,Serialize,Deserialize)]
     pub struct ImageBucket{
-        pub size : u64,
-        pub lastUpdate: mongodb::bson::DateTime,
+        pub count : u64,
+        pub last_update: String,
     }
     #[derive(Debug,Serialize,Deserialize)]
     pub struct ServerStatus{
@@ -17,8 +17,8 @@ pub mod status{
             ServerStatus{
                 status:0,
                 data:ImageBucket{
-                    size:0,
-                    lastUpdate:mongodb::bson::DateTime::from_millis(0),
+                    count:0,
+                    last_update:mongodb::bson::DateTime::from_millis(0).to_string(),
                 }
             }
         }

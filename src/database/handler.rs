@@ -30,8 +30,7 @@ pub mod handler{
                     if let Some(result) = cur.next().await{
                         match result {
                             Ok(document)=>{
-                                
-                                return Some(document.get_i64("source").unwrap_or(0) as u64);
+                                return Some(document.get_i32("source").unwrap_or_default() as u64);
                             },
                             Err(_)=>{}
                         }
@@ -68,7 +67,8 @@ pub mod handler{
                     if let Some(result) = cur.next().await{
                         match result {
                             Ok(document)=>{
-                                return bson::DateTime::from_millis(document.get_i32("created_at").unwrap().into());
+                                let ts = document.get_i32("created_at").unwrap() as i64;
+                                return bson::DateTime::from_millis(ts*1000);
                             },
                             Err(_)=>{return bson::DateTime::from_millis(0);}
                         }

@@ -43,11 +43,11 @@ pub mod api{
     pub async fn server_status() -> Result<Response<String>, Rejection> {
         let mut status = ServerStatus::new();
         let size = image_count().await;
-        status.data.size = size.unwrap_or(0);
-        status.data.lastUpdate = last_time().await;
+        status.data.count = size.unwrap_or(0);
+        status.data.last_update = last_time().await.to_string();
         let resp = Response::builder()
             .header("content-type","application/json")
-            .body(format!("{:?}",status)).unwrap();
+            .body(serde_json::to_string(&status).unwrap_or("".to_string())).unwrap();
         Ok(resp)
     }
     pub async fn read_image(img_data: &mut Vec<u8>, image:&ImageDetail, size:Option<&String>) -> Result<usize,usize>{
