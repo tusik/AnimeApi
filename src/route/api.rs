@@ -153,6 +153,10 @@ pub mod api{
         Ok(resp)
     }
     pub async fn sample_image_redirect(params: HashMap<String, String>) -> Result<impl warp::Reply, warp::Rejection> {
+        let domain = unsafe{
+            let config = CONFIG.as_ref().unwrap();
+            config.host.domain[rand::random::<usize>() % config.host.domain.len()].as_str()
+        };
         let mut nin:Option<Vec<&str>> = None;
         match params.get("nin"){
             None => {}
@@ -167,7 +171,7 @@ pub mod api{
         let image = sample_one(params.get("id"), nin, direction).await.unwrap();
 
         let ext = get_file_ext(image.file_url.as_str());
-        let mut  target_link:String = "https://b2.pic.re/".to_string();
+        let mut  target_link:String = format!("https://{:}/",domain);
         target_link+= &image.md5[0..2];
 	    target_link+= "/";
         target_link+= &image.md5;

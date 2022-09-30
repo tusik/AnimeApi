@@ -5,8 +5,34 @@ pub mod handler{
     use log::info;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::config::config::{ CONFIG};
-
+    extern crate redis;
+    use redis::Commands;
     static mut CLIENT:Option<Client> = None;
+    static mut REDIS_CLIENT:Option<redis::Client> = None;
+
+    pub async fn redis_incr(){
+        let redis_host;
+        let r_client ;
+        unsafe{
+            redis_host = CONFIG.as_ref().unwrap().host.redis.as_str();
+            if REDIS_CLIENT.is_none(){
+                REDIS_CLIENT = Some(redis::Client::open(redis_host).expect("unable to open"));
+            }
+            r_client = &REDIS_CLIENT;
+            
+        }
+        match r_client {
+            Some(c) => {
+                let mut con = c.get_connection().expect("Unable to connecet redis");
+                let _ : () = con.incr("cv", 1).expect("incr count failed");
+            },
+            None => {
+
+            },
+        }
+        
+
+    }
     pub async fn image_count() -> Option<u64>{
         unsafe{
             if CLIENT.is_none(){
@@ -81,6 +107,7 @@ pub mod handler{
     }
 
     pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>) -> Option<ImageDetail> {
+        redis_incr().await;
         let mut image = None;
         unsafe {
             if CLIENT.is_none(){
