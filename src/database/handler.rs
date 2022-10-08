@@ -10,7 +10,7 @@ pub mod handler{
     static mut CLIENT:Option<Client> = None;
     static mut REDIS_CLIENT:Option<redis::Client> = None;
 
-    pub async fn redis_incr(){
+    pub fn get_redis() -> &'static Option<redis::Client>{
         let redis_host;
         let r_client ;
         unsafe{
@@ -19,8 +19,11 @@ pub mod handler{
                 REDIS_CLIENT = Some(redis::Client::open(redis_host).expect("unable to open"));
             }
             r_client = &REDIS_CLIENT;
-            
         }
+        r_client
+    }
+    pub fn redis_incr(){
+        let r_client = get_redis();
         match r_client {
             Some(c) => {
                 let mut con = c.get_connection().expect("Unable to connecet redis");
@@ -31,8 +34,20 @@ pub mod handler{
             },
         }
         
-
     }
+
+    pub fn call_count()->Option<u64>{
+        let r_client = get_redis();
+        match r_client {
+            Some(c) => {
+                let mut con = c.get_connection().expect("Unable to connecet redis");
+                let cv  = con.get("cv").expect("failed get cv");
+                cv
+            }
+            None => {None},
+        }
+    }
+
     pub async fn image_count() -> Option<u64>{
         unsafe{
             if CLIENT.is_none(){
@@ -107,7 +122,7 @@ pub mod handler{
     }
 
     pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>) -> Option<ImageDetail> {
-        redis_incr().await;
+        redis_incr();
         let mut image = None;
         unsafe {
             if CLIENT.is_none(){

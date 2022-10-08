@@ -1,6 +1,6 @@
 #[allow(dead_code)]
 pub mod api{
-    use crate::database::handler::handler::{sample_one, image_count, last_time};
+    use crate::database::handler::handler::{sample_one, image_count, last_time, call_count};
     use crate::entity::status::status::ServerStatus;
     use warp::{Filter, Rejection};
     use warp::http::{Response, Uri};
@@ -42,9 +42,11 @@ pub mod api{
     }
     pub async fn server_status() -> Result<Response<String>, Rejection> {
         let mut status = ServerStatus::new();
+        let call_count = call_count();
         let size = image_count().await;
         status.data.count = size.unwrap_or(0);
         status.data.last_update = last_time().await.to_string();
+        status.data.api_call_count = call_count.expect("fetch call count failed");
         let resp = Response::builder()
             .header("content-type","application/json")
             .body(serde_json::to_string(&status).unwrap_or("".to_string())).unwrap();
