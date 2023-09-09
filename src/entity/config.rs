@@ -1,10 +1,12 @@
+
 pub mod config{
     use serde::Serialize;
     use serde::Deserialize;
     pub static mut CONFIG:Option<Config> = None;
     #[derive(Debug,Serialize,Deserialize)]
     pub struct Config{
-        pub system:SystemConfig
+        pub system:SystemConfig,
+        pub host:HostConfig
     }
     #[derive(Debug,Serialize,Deserialize)]
     pub struct SystemConfig{
@@ -12,6 +14,11 @@ pub mod config{
         pub path:String,
         pub origin_img:String,
         pub preview_img:String
+    }
+    #[derive(Debug,Serialize,Deserialize)]
+    pub struct HostConfig{
+        pub domain:Vec<String>,
+        pub redis:String
     }
     impl Config{
         pub async fn load() {

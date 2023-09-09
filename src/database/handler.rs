@@ -5,9 +5,50 @@ pub mod handler{
     use log::info;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::config::config::{ CONFIG};
-
+    extern crate redis;
+    use redis::Commands;
     static mut CLIENT:Option<Client> = None;
-    pub async fn image_count() -> Option<i32>{
+    static mut REDIS_CLIENT:Option<redis::Client> = None;
+
+    pub fn get_redis() -> &'static Option<redis::Client>{
+        let redis_host;
+        let r_client ;
+        unsafe{
+            redis_host = CONFIG.as_ref().unwrap().host.redis.as_str();
+            if REDIS_CLIENT.is_none(){
+                REDIS_CLIENT = Some(redis::Client::open(redis_host).expect("unable to open"));
+            }
+            r_client = &REDIS_CLIENT;
+        }
+        r_client
+    }
+    pub fn redis_incr(){
+        let r_client = get_redis();
+        match r_client {
+            Some(c) => {
+                let mut con = c.get_connection().expect("Unable to connecet redis");
+                let _ : () = con.incr("cv", 1).expect("incr count failed");
+            },
+            None => {
+
+            },
+        }
+        
+    }
+
+    pub fn call_count()->Option<u64>{
+        let r_client = get_redis();
+        match r_client {
+            Some(c) => {
+                let mut con = c.get_connection().expect("Unable to connecet redis");
+                let cv  = con.get("cv").expect("failed get cv");
+                cv
+            }
+            None => {None},
+        }
+    }
+
+    pub async fn image_count() -> Option<u64>{
         unsafe{
             if CLIENT.is_none(){
                 CLIENT = Some(Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str()).await.unwrap());
@@ -30,8 +71,7 @@ pub mod handler{
                     if let Some(result) = cur.next().await{
                         match result {
                             Ok(document)=>{
-                                
-                                return Some(document.get_i32("source").unwrap());
+                                return Some(document.get_i32("source").unwrap_or_default() as u64);
                             },
                             Err(_)=>{}
                         }
@@ -43,9 +83,46 @@ pub mod handler{
             return Some(0)
         }
         
-        
     }
+
+    pub async fn last_time() -> bson::DateTime{
+        unsafe{
+            if CLIENT.is_none(){
+                CLIENT = Some(Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str()).await.unwrap());
+            }
+            match &CLIENT {
+                Some(client) => {
+                    let db = client.database("anime");
+                    let col: Collection<Document> = db.collection("artwork");
+                    let pipeline = vec![
+                        doc!{
+                            "$sort":{
+                                "created_at": -1i32
+                            }
+                        },
+                        doc!{
+                            "$limit":1i32
+                        }
+                    ];
+                    let mut cur = col.aggregate(pipeline,None).await.unwrap();
+                    if let Some(result) = cur.next().await{
+                        match result {
+                            Ok(document)=>{
+                                let ts = document.get_i32("created_at").unwrap() as i64;
+                                return bson::DateTime::from_millis(ts*1000);
+                            },
+                            Err(_)=>{return bson::DateTime::from_millis(0);}
+                        }
+                    }
+                },
+                None => {return bson::DateTime::from_millis(0);},
+            }
+            return bson::DateTime::from_millis(0);
+        }
+    }
+
     pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>) -> Option<ImageDetail> {
+        redis_incr();
         let mut image = None;
         unsafe {
             if CLIENT.is_none(){
