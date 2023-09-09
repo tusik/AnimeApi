@@ -27,6 +27,9 @@
 		<div class="background-image" style="background-image: url('/images');"></div>
 		<h1>Anime Picture Api</h1>
 		<h3>A free public Anime picture provider api.</h3>
+		<h4 id="api_image_status"></h4>
+		<span id="api_call_status"></span>
+		<span><br></span>
 		<a href="https://api.bi/docs/animeapi/" class="btn">How to use</a>
 	</section>
 
@@ -37,10 +40,17 @@
 			<li><a href="https://github.com/tusik"><i class="fa fa-github-square"></i></a></li>
 		</ul>
 		<p>Made by <a href="https://docs.rs/warp" target="_blank">Rust Warp</a>. </p>
-
+		<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 		<!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-0HFVJ9VV5D"></script>
 		<script>
+			$.get("/status", function(data, status){
+				var text = "Provied " + data["data"]["count"] + " artworks.";
+				$("#api_image_status").text(text);
+				text = "Has been called "+ data["data"]["api_call_count"] + " Times.";
+				$("#api_call_status").text(text);
+				console.log(data);
+			});
 			window.dataLayer = window.dataLayer || [];
 			function gtag(){dataLayer.push(arguments);}
 			gtag('js', new Date());
