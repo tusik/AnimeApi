@@ -47,12 +47,11 @@ pub mod api {
     }
     pub async fn server_status() -> Result<Response<String>, Rejection> {
         let mut status = ServerStatus::new();
-        // let call_count = call_count();
-        let call_count = 1000;
-        let size = 11212;
-        status.data.count = 222;
-        status.data.last_update = "sdadas".to_string();
-        status.data.api_call_count = 123;
+        let call_count = call_count();
+        let size = image_count().await;
+        status.data.count = size.unwrap_or(0);
+        status.data.last_update = last_time().await.to_string();
+        status.data.api_call_count = call_count.expect("fetch call count failed");
         let resp = Response::builder()
             .header("content-type", "application/json")
             .body(serde_json::to_string(&status).unwrap_or("".to_string()))
