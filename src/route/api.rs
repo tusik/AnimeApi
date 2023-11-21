@@ -1,7 +1,13 @@
 #[allow(dead_code)]
-pub mod api {
-    use crate::database::handler::handler::{call_count, image_count, last_time, sample_one};
-    use crate::entity::config::config::CONFIG;
+pub mod api{
+    use crate::database::handler::handler::{sample_one, image_count, last_time, call_count};
+    use crate::entity::status::status::ServerStatus;
+    use crate::util::ipcheck::checker::Country;
+    use warp::{Filter, Rejection};
+    use warp::http::{Response, Uri};
+    use std::collections::HashMap;
+    use std::sync::Arc;
+    use crate::entity::config::config::{CONFIG,CHECKER};
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::status::status::ServerStatus;
     use serde_json;
@@ -10,8 +16,7 @@ pub mod api {
     use warp::http::{Response, Uri};
     use warp::{Filter, Rejection};
 
-    pub fn api_sample() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
-    {
+    pub fn api_sample() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone{
         warp::get()
             .and(warp::path("image"))
             .and(warp::query::<HashMap<String, String>>())
@@ -30,6 +35,7 @@ pub mod api {
         warp::get()
             .and(warp::path("images"))
             .and(warp::query::<HashMap<String, String>>())
+            .and(warp::header::optional::<String>("HTTP_CF_CONNECTING_IP"))
             .and_then(sample_image_redirect)
     }
     pub fn api_sample_json(
@@ -193,12 +199,25 @@ pub mod api {
             .unwrap();
         Ok(resp)
     }
-    pub async fn sample_image_redirect(
-        params: HashMap<String, String>,
-    ) -> Result<impl warp::Reply, warp::Rejection> {
-        let domain = unsafe {
+    pub async fn sample_image_redirect(params: HashMap<String, String>, ip:Option<String>) -> Result<impl warp::Reply, warp::Rejection> {
+        let domain = unsafe{
             let config = CONFIG.as_ref().unwrap();
-            config.host.domain[rand::random::<usize>() % config.host.domain.len()].as_str()
+            let ip_checker = CHECKER.as_ref().unwrap();
+            match ip {
+                Some(ip) => {
+                    println!("ip:{}",ip);
+                    if ip_checker.check_ip_str(ip, Country::CN){
+                        config.host.domain[0].as_str()
+                    }else{
+                        config.host.domain[1].as_str()
+                    }
+                }
+                None => {
+                    config.host.domain[0].as_str()
+                }
+                
+            }
+            
         };
         let mut nin: Option<Vec<&str>> = None;
         match params.get("nin") {

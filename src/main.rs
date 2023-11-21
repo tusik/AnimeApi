@@ -9,7 +9,7 @@ use crate::route::main_page::main_page::{index_static, css_static};
 mod database;
 mod entity;
 mod route;
-
+mod util;
 
 #[tokio::main]
 async fn main() {

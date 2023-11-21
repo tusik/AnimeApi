@@ -1,8 +1,11 @@
 
 pub mod config{
+    use crate::util::ipcheck::checker::Checker;
+    use crate::util::ipcheck::checker::Country;
     use serde::Serialize;
     use serde::Deserialize;
     pub static mut CONFIG:Option<Config> = None;
+    pub static mut CHECKER:Option<Checker> = None;
     #[derive(Debug,Serialize,Deserialize)]
     pub struct Config{
         pub system:SystemConfig,
@@ -35,7 +38,11 @@ pub mod config{
             unsafe {
                 CONFIG = Some(c);
             }
-
+            let mut checker = Checker::new();
+            unsafe {
+                checker.read_ip(Country::CN);
+                CHECKER = Some(checker);
+            }
         }
     }
 }
