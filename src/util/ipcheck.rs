@@ -54,10 +54,10 @@ pub mod checker{
             }
         }
         pub fn read_ip(&mut self, country:Country){
-            let mut path = "d:\\china_ip.txt";
+            let mut path = "china_ip.txt";
             match country{
                 Country::CN => {
-                    path ="d:\\china_ip.txt";
+                    path ="china_ip.txt";
                 },
                 _ => {
                     println!("Not CN");
