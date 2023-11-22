@@ -29,11 +29,12 @@ pub mod api{
     }
     pub fn api_sample_red_post(
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        let remote: IpAddr = [127, 0, 0, 1].into();
         warp::get()
             .and(warp::path("images"))
             .and(warp::query::<HashMap<String, String>>())
             .and(warp::header::optional::<String>("HTTP_CF_CONNECTING_IP"))
-            .and(real_ip(vec![]))
+            .and(real_ip(vec![remote]))
             .and_then(sample_image_redirect)
     }
     pub fn api_sample_json(
