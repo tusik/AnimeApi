@@ -203,10 +203,9 @@ pub mod api{
             let config = CONFIG.as_ref().unwrap();
             let ip_checker = CHECKER.as_ref().unwrap();
             let mut domain_index = 0;
-            println!("ip:{}",real_ip.unwrap());
+            println!("real_ip:{}, ip{}",real_ip.as_ref().unwrap(),cf_ip.as_ref().unwrap());
             match cf_ip {
                 Some(ip) => {
-                    println!("ip:{}",ip);
                     if ip_checker.check_ip_str(ip, Country::CN){
                         domain_index = 1;
                     }else{
