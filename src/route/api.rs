@@ -204,23 +204,29 @@ pub mod api{
             let ip_checker = CHECKER.as_ref().unwrap();
             let mut domain_index = 0;
             println!("real_ip:{:?}, ip{:?}",&real_ip,&cf_ip);
-            match cf_ip {
-                Some(ip) => {
-                    if ip_checker.check_ip_str(ip, Country::CN){
-                        domain_index = 1;
-                    }else{
-                        domain_index = 0;
+            let cf = IpAddr::from_str(&cf_ip.clone().unwrap()).expect("error ip");
+            if cf.is_ipv4(){
+                match cf_ip {
+                    Some(ip) => {
+                        if ip_checker.check_ip_str(ip, Country::CN){
+                            domain_index = 1;
+                        }else{
+                            domain_index = 0;
+                        }
                     }
-                }
-                None => {
-                    if ip_checker.check_ip_str(real_ip.unwrap().to_string(), Country::CN){
-                        domain_index = 1;
-                    }else{
-                        domain_index = 0;
+                    None => {
+                        if ip_checker.check_ip_str(real_ip.unwrap().to_string(), Country::CN){
+                            domain_index = 1;
+                        }else{
+                            domain_index = 0;
+                        }
                     }
+                    
                 }
-                
+            }else{
+                domain_index = 0;
             }
+            
             config.host.domain[domain_index].as_str()
         };
         let mut nin: Option<Vec<&str>> = None;
