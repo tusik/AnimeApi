@@ -12,6 +12,7 @@ pub mod checker{
     use std::net::Ipv4Addr;
 
     use std::io::{BufRead, BufReader};
+    use ipnet::Ipv4Net;
     use rust_lapper::{Interval, Lapper};
     //国家列表
     pub enum Country{
@@ -70,7 +71,17 @@ pub mod checker{
             for line in reader.lines() {
                 cidrs.push(line.expect(""));
             }
-            
+
+            for cidr in cidrs {
+                let network: Ipv4Net = cidr.parse().unwrap();
+                let start = ipv4_to_u32(network.network());
+                let end = ipv4_to_u32(network.broadcast());
+                self.intervals.push(Interval { 
+                    start, 
+                    stop:end , 
+                    val: (),
+                });
+            }
             self.lapper = Lapper::new(self.intervals.clone());
         }
         pub fn is_empty(&self) -> bool{
