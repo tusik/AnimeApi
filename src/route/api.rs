@@ -33,7 +33,7 @@ pub mod api{
         warp::get()
             .and(warp::path("images"))
             .and(warp::query::<HashMap<String, String>>())
-            .and(warp::header::optional::<String>("HTTP_CF_CONNECTING_IP"))
+            .and(warp::header::optional::<String>("CF-Connecting-IP"))
             .and(real_ip(vec![remote]))
             .and_then(sample_image_redirect)
     }
