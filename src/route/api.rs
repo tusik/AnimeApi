@@ -1,17 +1,13 @@
 #[allow(dead_code)]
 pub mod api {
     use crate::database::handler::handler::{call_count, image_count, last_time, sample_one};
-    use crate::entity::config::config::{CHECKER, CONFIG};
+    use crate::entity::config::config::CONFIG;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::status::status::ServerStatus;
-    use crate::util::ipcheck::checker::Country;
     use serde_json;
     use std::collections::HashMap;
     use std::str::FromStr;
-    use std::sync::Arc;
-    use warp::http::{Response, Uri};
-    use warp::{Filter, Rejection};
-
+    use warp::{http::Response, http::Uri, Filter, Rejection};
     pub fn api_sample() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
     {
         warp::get()
@@ -32,7 +28,6 @@ pub mod api {
         warp::get()
             .and(warp::path("images"))
             .and(warp::query::<HashMap<String, String>>())
-            .and(warp::header::optional::<String>("HTTP_CF_CONNECTING_IP"))
             .and_then(sample_image_redirect)
     }
     pub fn api_sample_json(
@@ -72,12 +67,12 @@ pub mod api {
         let ext = ext_tmp.last().unwrap();
         let path_prefix;
         let origin_prefix;
-        let preview_prefix;
+        // let preview_prefix;
         let webp_prefix;
         unsafe {
             path_prefix = CONFIG.as_ref().unwrap().system.path.as_str();
             origin_prefix = CONFIG.as_ref().unwrap().system.origin_img.as_str();
-            preview_prefix = CONFIG.as_ref().unwrap().system.preview_img.as_str();
+            // preview_prefix = CONFIG.as_ref().unwrap().system.preview_img.as_str();
             webp_prefix = CONFIG.as_ref().unwrap().system.webp_path.as_str();
         }
         let mut full_name = format!(
@@ -123,7 +118,7 @@ pub mod api {
         let tmp_string: Vec<&str> = filename.split("/").collect();
         let ext_tmp: Vec<&str> = tmp_string.last().unwrap().split(".").collect();
         let ext = ext_tmp.last().unwrap();
-        return ext.clone();
+        return ext;
     }
     pub async fn sample_image_post(
         params: HashMap<String, String>,
@@ -197,22 +192,12 @@ pub mod api {
     }
     pub async fn sample_image_redirect(
         params: HashMap<String, String>,
-        ip: Option<String>,
     ) -> Result<impl warp::Reply, warp::Rejection> {
         let domain = unsafe {
             let config = CONFIG.as_ref().unwrap();
-            let ip_checker = CHECKER.as_ref().unwrap();
-            match ip {
-                Some(ip) => {
-                    println!("ip:{}", ip);
-                    if ip_checker.check_ip_str(ip, Country::CN) {
-                        config.host.domain[0].as_str()
-                    } else {
-                        config.host.domain[1].as_str()
-                    }
-                }
-                None => config.host.domain[0].as_str(),
-            }
+            let domain_index = 0;
+
+            config.host.domain[domain_index].as_str()
         };
         let mut nin: Option<Vec<&str>> = None;
         match params.get("nin") {
