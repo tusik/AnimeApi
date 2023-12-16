@@ -150,7 +150,7 @@ pub mod handler{
                         let mut pipeline = vec![
                             doc!{
                                 "$match":{
-                                    "file_url":{"$regex":"(jpg|png)$"},
+                                    "file_url":{"$regex":"^(.*)(jpg|png)$"},
                                     "created_at":{"$gt":1506787200},
                                     "file_size":{"$lt":12*1024*1024},
                                     "file_size":{"$gt":500*1024},
