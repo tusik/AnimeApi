@@ -90,7 +90,7 @@ pub mod api {
                 &webp_prefix,
                 &md5[0..2],
                 &md5,
-                ext
+                "webp"
             );
         }
         let img_res = tokio::fs::read(&full_name).await;
