@@ -173,22 +173,21 @@ pub mod handler{
                             },
                             None => {},
                         };
-                        match params.get("max_size") {
+                        let max_size = match params.get("max_size") {
                             Some(v) => {
-                                let max = v.parse::<u32>().unwrap_or(4096);
-                                let max_value = doc!{
-                                    "$match":{
-                                        "$and":[
-                                            {"jpeg_width":{"$lt":max as u32}},
-                                            {"jpeg_height":{"$lt":max as u32}}
-                                        ]
-                                      }
-                                };
-                                pipeline.push(max_value);
+                                v.parse::<u32>().unwrap_or(6144)
                             },
-                            None => {},
+                            None => 6144,
                         };
-
+                        let max_value = doc!{
+                            "$match":{
+                                "$and":[
+                                    {"jpeg_width":{"$lt":max_size as u32}},
+                                    {"jpeg_height":{"$lt":max_size as u32}}
+                                ]
+                              }
+                        };
+                        pipeline.push(max_value);
                         match horizontal {
                             Some(hor) => {
                                 let hor_value;
