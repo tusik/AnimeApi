@@ -99,7 +99,7 @@ pub mod api {
                 img_data.extend_from_slice(d.as_slice());
                 return Ok(img_data.len());
             }
-            Err(e) => {println!("read image error: {}", e)}
+            Err(e) => {println!("read image error: {} {}", e, full_name)}
         }
         return Err(0);
     }
