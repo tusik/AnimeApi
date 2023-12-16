@@ -1,8 +1,8 @@
 /*
  * @Author: Image_woker_pc image@by.cx
  * @Date: 2022-08-08 15:37:18
- * @LastEditors: Image_woker_pc image@by.cx
- * @LastEditTime: 2022-10-08 14:06:44
+ * @LastEditors: Image image@by.cx
+ * @LastEditTime: 2023-12-16 18:30:01
  * @FilePath: \AnimeApi\src\entity\status.rs
  * @filePathColon: /
  * @Description: 
@@ -11,7 +11,7 @@
  */
 pub mod status{
     use serde::{Serialize, Deserialize};
-
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
     #[derive(Debug,Serialize,Deserialize)]
     pub struct ImageBucket{
         pub count : u64,
@@ -21,6 +21,7 @@ pub mod status{
     #[derive(Debug,Serialize,Deserialize)]
     pub struct ServerStatus{
         pub status: u64,
+        pub version: String,
         pub data:ImageBucket
         
     }
@@ -28,6 +29,7 @@ pub mod status{
         pub fn new()->ServerStatus{
             ServerStatus{
                 status:0,
+                version:VERSION.to_string(),
                 data:ImageBucket{
                     count:0,
                     last_update:mongodb::bson::DateTime::from_millis(0).to_string(),
