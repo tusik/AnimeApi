@@ -2,19 +2,16 @@
  * @Author: Image image@by.cx
  * @Date: 2023-12-15 11:34:10
  * @LastEditors: Image image@by.cx
- * @LastEditTime: 2023-12-16 14:21:21
+ * @LastEditTime: 2023-12-16 15:16:33
  * @filePathColon: /
  * @Description: 
  * 
  * Copyright (c) 2023 by Image, All Rights Reserved. 
  */
 pub mod config {
-    use crate::util::ipcheck::checker::Checker;
-    use crate::util::ipcheck::checker::Country;
     use serde::Deserialize;
     use serde::Serialize;
     pub static mut CONFIG: Option<Config> = None;
-    pub static mut CHECKER: Option<Checker> = None;
     #[derive(Debug, Serialize, Deserialize)]
     pub struct Config {
         pub system: SystemConfig,

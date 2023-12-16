@@ -134,7 +134,8 @@ pub mod api {
             Some(v) => Some(v == "horizontal"),
             None => None,
         };
-        let image = sample_one(params.get("id"), nin, direction).await.unwrap();
+
+        let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
         let resp = Response::builder()
             .header("content-type", "application/json")
             .body(serde_json::to_string(&image).unwrap())
@@ -155,7 +156,8 @@ pub mod api {
             Some(v) => Some(v == "horizontal"),
             None => None,
         };
-        let image = sample_one(params.get("id"), nin, direction).await.unwrap();
+        
+        let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
 
         let compress = match params.get("compress") {
             None => false,
@@ -216,7 +218,8 @@ pub mod api {
             Some(v) => Some(v == "horizontal"),
             None => None,
         };
-        let image = sample_one(params.get("id"), nin, direction).await.unwrap();
+
+        let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
 
         let ext = get_file_ext(image.file_url.as_str());
         let mut target_link: String = format!("https://{:}/", domain);

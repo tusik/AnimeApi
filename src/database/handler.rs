@@ -1,4 +1,6 @@
 pub mod handler{
+    use std::collections::HashMap;
+
     use mongodb::{Client, bson, Collection};
     use mongodb::bson::{doc, Document};
     use futures::stream::StreamExt;
@@ -121,7 +123,7 @@ pub mod handler{
         }
     }
 
-    pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>) -> Option<ImageDetail> {
+    pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>, params: HashMap<String, String>) -> Option<ImageDetail> {
         redis_incr();
         let mut image = None;
         unsafe {
@@ -150,12 +152,43 @@ pub mod handler{
                                 "$match":{
                                     "file_url":{"$regex":"(jpg|png)$"},
                                     "created_at":{"$gt":1506787200},
-                                    "file_size":{"$lt":10*1024*1024},
+                                    "file_size":{"$lt":12*1024*1024},
                                     "file_size":{"$gt":500*1024},
                                     "rating_on_ml":"s"
                                 }
                             }
                         ];
+                        match params.get("min_size") {
+                            Some(v) => {
+                                let min = v.parse::<u32>().unwrap_or(640);
+                                let min_value = doc!{
+                                    "$expr":{
+                                        "$and":[
+                                            {"jpeg_width":{"$gt":min as u32}},
+                                            {"jpeg_height":{"$gt":min as u32}}
+                                        ]
+                                      }
+                                };
+                                pipeline.push(min_value);
+                            },
+                            None => {},
+                        };
+                        match params.get("max_size") {
+                            Some(v) => {
+                                let max = v.parse::<u32>().unwrap_or(4096);
+                                let max_value = doc!{
+                                    "$expr":{
+                                        "$and":[
+                                            {"jpeg_width":{"$lt":max as u32}},
+                                            {"jpeg_height":{"$lt":max as u32}}
+                                        ]
+                                      }
+                                };
+                                pipeline.push(max_value);
+                            },
+                            None => {},
+                        };
+
                         match horizontal {
                             Some(hor) => {
                                 let hor_value;
