@@ -160,7 +160,7 @@ pub mod api {
         let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
 
         let compress = match params.get("compress") {
-            None => false,
+            None => true,
             Some(v) => {
                 if v == "true" {
                     true
