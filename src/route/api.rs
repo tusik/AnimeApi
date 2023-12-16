@@ -93,13 +93,13 @@ pub mod api {
                 ext
             );
         }
-        let img_res = tokio::fs::read(full_name).await;
+        let img_res = tokio::fs::read(&full_name).await;
         match &img_res {
             Ok(d) => {
                 img_data.extend_from_slice(d.as_slice());
                 return Ok(img_data.len());
             }
-            Err(e) => {println!("read image error: {} {}", e, full_name)}
+            Err(e) => {println!("read image error: {} {}", e, &full_name)}
         }
         return Err(0);
     }
