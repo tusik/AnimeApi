@@ -162,12 +162,10 @@ pub mod handler{
                             Some(v) => {
                                 let min = v.parse::<u32>().unwrap_or(640);
                                 let min_value = doc!{
-                                    "$expr":{
-                                        "$and":[
-                                            {"jpeg_width":{"$gt":min as u32}},
-                                            {"jpeg_height":{"$gt":min as u32}}
-                                        ]
-                                      }
+                                    "$and":[
+                                        {"jpeg_width":{"$gt":min as u32}},
+                                        {"jpeg_height":{"$gt":min as u32}}
+                                    ]
                                 };
                                 pipeline.push(min_value);
                             },
@@ -177,12 +175,10 @@ pub mod handler{
                             Some(v) => {
                                 let max = v.parse::<u32>().unwrap_or(4096);
                                 let max_value = doc!{
-                                    "$expr":{
-                                        "$and":[
-                                            {"jpeg_width":{"$lt":max as u32}},
-                                            {"jpeg_height":{"$lt":max as u32}}
-                                        ]
-                                      }
+                                    "$and":[
+                                        {"jpeg_width":{"$lt":max as u32}},
+                                        {"jpeg_height":{"$lt":max as u32}}
+                                    ]
                                 };
                                 pipeline.push(max_value);
                             },
