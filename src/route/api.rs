@@ -99,7 +99,7 @@ pub mod api {
                 img_data.extend_from_slice(d.as_slice());
                 return Ok(img_data.len());
             }
-            _ => {}
+            Err(e) => {println!("read image error: {}", e)}
         }
         return Err(0);
     }
@@ -178,7 +178,13 @@ pub mod api {
 
         let mut img_data = vec![];
 
-        while read_image(&mut img_data, &image, compress).await.is_err() {}
+        if read_image(&mut img_data, &image, compress).await.is_err() {
+            let resp = Response::builder()
+                .header("content-type", "application/json")
+                .body(vec![])
+                .unwrap();
+            return Ok(resp);
+        }
 
         let content_type = get_content_type(ext);
         let resp = Response::builder()
