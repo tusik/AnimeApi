@@ -1,3 +1,13 @@
+/*
+ * @Author: Image image@by.cx
+ * @Date: 2023-12-15 11:34:10
+ * @LastEditors: Image image@by.cx
+ * @LastEditTime: 2023-12-16 14:21:21
+ * @filePathColon: /
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by Image, All Rights Reserved. 
+ */
 pub mod config {
     use crate::util::ipcheck::checker::Checker;
     use crate::util::ipcheck::checker::Country;
@@ -38,11 +48,7 @@ pub mod config {
             unsafe {
                 CONFIG = Some(c);
             }
-            let mut checker = Checker::new();
-            unsafe {
-                checker.read_ip(Country::CN);
-                CHECKER = Some(checker);
-            }
+            
         }
     }
 }
