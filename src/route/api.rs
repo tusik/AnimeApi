@@ -218,10 +218,25 @@ pub mod api {
             Some(v) => Some(v == "horizontal"),
             None => None,
         };
-
+        let compress = match params.get("compress") {
+            None => true,
+            Some(v) => {
+                if v == "true" {
+                    true
+                } else {
+                    false
+                }
+            }
+        };
+        let ext = {
+            if compress {
+                "webp"
+            } else {
+                get_file_ext(image.file_url.as_str())
+            }
+        };
         let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
 
-        let ext = get_file_ext(image.file_url.as_str());
         let mut target_link: String = format!("https://{:}/", domain);
         target_link += &image.md5[0..2];
         target_link += "/";
