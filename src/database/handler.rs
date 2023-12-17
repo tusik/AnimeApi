@@ -211,7 +211,6 @@ pub mod handler{
                         match result {
                             Ok(document)=>{
                                 image = Some(bson::from_document(document).unwrap());
-                                info!("{:?}",&image);
                             },
                             Err(_)=>{}
                         }
