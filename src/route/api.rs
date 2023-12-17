@@ -228,6 +228,8 @@ pub mod api {
                 }
             }
         };
+        
+        let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
         let ext = {
             if compress {
                 "webp"
@@ -235,7 +237,6 @@ pub mod api {
                 get_file_ext(image.file_url.as_str())
             }
         };
-        let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
 
         let mut target_link: String = format!("https://{:}/", domain);
         target_link += &image.md5[0..2];
