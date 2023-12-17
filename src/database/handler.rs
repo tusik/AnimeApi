@@ -4,7 +4,6 @@ pub mod handler{
     use mongodb::{Client, bson, Collection};
     use mongodb::bson::{doc, Document};
     use futures::stream::StreamExt;
-    use log::info;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::config::config::{ CONFIG};
     extern crate redis;
