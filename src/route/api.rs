@@ -1,6 +1,6 @@
 #[allow(dead_code)]
 pub mod api {
-    use crate::database::handler::handler::{call_count, image_count, last_time, sample_one, redis_incr_key};
+    use crate::database::handler::handler::{call_count, image_count, last_time, sample_one, redis_incr_key, redis_get_value};
     use crate::entity::config::config::CONFIG;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::status::status::ServerStatus;
@@ -48,9 +48,11 @@ pub mod api {
         let mut status = ServerStatus::new();
         let call_count = call_count();
         let size = image_count().await;
+        let traffic = redis_get_value("traffic");
         status.data.count = size.unwrap_or(0);
         status.data.last_update = last_time().await.to_string();
         status.data.api_call_count = call_count.expect("fetch call count failed");
+        status.data.traffic = traffic.unwrap_or(0);
         let resp = Response::builder()
             .header("content-type", "application/json")
             .body(serde_json::to_string(&status).unwrap_or("".to_string()))

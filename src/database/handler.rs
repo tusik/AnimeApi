@@ -37,15 +37,29 @@ pub mod handler{
         }
         
     }
-    pub fn redis_incr_key(Key: &str, value:usize){
+    pub fn redis_incr_key(key: &str, value:usize){
         let r_client = get_redis();
         match r_client {
             Some(c) => {
                 let mut con = c.get_connection().expect("Unable to connecet redis");
-                let _ : () = con.incr(Key, value).expect("incr count failed");
+                let _ : () = con.incr(key, value).expect("incr count failed");
             },
             None => {
 
+            },
+        }
+        
+    }
+    pub fn redis_get_value(key: &str) -> Option<u64>{
+        let r_client = get_redis();
+        match r_client {
+            Some(c) => {
+                let mut con = c.get_connection().expect("Unable to connecet redis");
+                let v  = con.get(key).expect("failed get redis value");
+                v
+            },
+            None => {
+                None
             },
         }
         
