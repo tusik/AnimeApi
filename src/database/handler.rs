@@ -234,7 +234,7 @@ pub mod handler{
             }
 
         }
-        print!("mongo time: {:?}", SystemTime::now().duration_since(start_time).unwrap());
+        println!("mongo time: {:?}", SystemTime::now().duration_since(start_time).unwrap());
         image
 
     }
