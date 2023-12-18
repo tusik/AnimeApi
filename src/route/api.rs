@@ -157,9 +157,7 @@ pub mod api {
             Some(v) => Some(v == "horizontal"),
             None => None,
         };
-        let start_time = SystemTime::now();
         let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
-        let query_time = SystemTime::now().duration_since(start_time).unwrap();
         let compress = match params.get("compress") {
             None => true,
             Some(v) => {
@@ -190,8 +188,7 @@ pub mod api {
         }
         let read_time = SystemTime::now().duration_since(start_time).unwrap();
         println!(
-            "query time: {:?}, read time: {:?}",
-            query_time, read_time);
+            "read time: {:?}",read_time);
         let content_type = get_content_type(ext);
         let resp = Response::builder()
             .header("content-type", content_type)

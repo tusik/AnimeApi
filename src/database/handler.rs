@@ -1,5 +1,6 @@
 pub mod handler{
     use std::collections::HashMap;
+    use std::time::SystemTime;
 
     use mongodb::{Client, bson, Collection};
     use mongodb::bson::{doc, Document};
@@ -123,6 +124,8 @@ pub mod handler{
     }
 
     pub async fn sample_one(id:Option<&String>, nin_tags:Option<Vec<&str>>, horizontal:Option<bool>, params: HashMap<String, String>) -> Option<ImageDetail> {
+        
+        let start_time = SystemTime::now();
         redis_incr();
         let mut image = None;
         unsafe {
@@ -219,6 +222,7 @@ pub mod handler{
             }
 
         }
+        print!("mongo time: {:?}", SystemTime::now().duration_since(start_time).unwrap());
         image
 
     }
