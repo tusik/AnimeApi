@@ -45,9 +45,11 @@
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-0HFVJ9VV5D"></script>
 		<script>
 			$.get("/status", function(data, status){
+				var traffic = data["data"]["traffic"]/1024.0/1024.0/1024.0;
+				traffic = traffic.toFixed(2);
 				var text = "Provied " + data["data"]["count"] + " artworks.";
 				$("#api_image_status").text(text);
-				text = "Has been called "+ data["data"]["api_call_count"] + " Times.";
+				text = "Has been called "+ data["data"]["api_call_count"] + " Times. Traffic: " + traffic + " GB.";
 				$("#api_call_status").text(text);
 				console.log(data);
 			});
