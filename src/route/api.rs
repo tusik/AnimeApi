@@ -1,6 +1,6 @@
 #[allow(dead_code)]
 pub mod api {
-    use crate::database::handler::handler::{call_count, image_count, last_time, sample_one};
+    use crate::database::handler::handler::{call_count, image_count, last_time, sample_one, redis_incr_key};
     use crate::entity::config::config::CONFIG;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::status::status::ServerStatus;
@@ -186,6 +186,7 @@ pub mod api {
                 .unwrap();
             return Ok(resp);
         }
+        redis_incr_key("traffic", img_data.len());
         let read_time = SystemTime::now().duration_since(start_time).unwrap();
         println!(
             "read time: {:?}",read_time);
@@ -233,8 +234,10 @@ pub mod api {
         let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
         let ext = {
             if compress {
+                redis_incr_key("traffic", image.file_size/3);
                 "webp"
             } else {
+                redis_incr_key("traffic", image.file_size);
                 get_file_ext(image.file_url.as_str())
             }
         };
