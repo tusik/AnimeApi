@@ -7,6 +7,7 @@ pub mod api {
     use serde_json;
     use std::collections::HashMap;
     use std::str::FromStr;
+    use std::time::SystemTime;
     use warp::{http::Response, http::Uri, Filter, Rejection};
     pub fn api_sample() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
     {
@@ -156,9 +157,9 @@ pub mod api {
             Some(v) => Some(v == "horizontal"),
             None => None,
         };
-        
+        let start_time = SystemTime::now();
         let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
-
+        let query_time = SystemTime::now().duration_since(start_time).unwrap();
         let compress = match params.get("compress") {
             None => true,
             Some(v) => {
@@ -179,7 +180,7 @@ pub mod api {
         };
 
         let mut img_data = vec![];
-
+        let start_time = SystemTime::now();
         if read_image(&mut img_data, &image, compress).await.is_err() {
             let resp = Response::builder()
                 .header("content-type", "application/json")
@@ -187,7 +188,10 @@ pub mod api {
                 .unwrap();
             return Ok(resp);
         }
-
+        let read_time = SystemTime::now().duration_since(start_time).unwrap();
+        println!(
+            "query time: {:?}, read time: {:?}",
+            query_time, read_time);
         let content_type = get_content_type(ext);
         let resp = Response::builder()
             .header("content-type", content_type)
