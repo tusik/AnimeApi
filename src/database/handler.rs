@@ -191,9 +191,9 @@ pub mod handler{
                         let mut pipeline = vec![
                             doc!{
                                 "$match":{
+                                    "rating_on_ml":"s",
                                     "created_at":{"$gt":1506787200},
                                     "file_size":{"$gt":500*1024, "$lt":12*1024*1024},
-                                    "rating_on_ml":"s",
                                     "$and":[
                                         {"jpeg_width":{"$gt":min, "$lt":max}},
                                         {"jpeg_height":{"$gt":min, "$lt":max}}
