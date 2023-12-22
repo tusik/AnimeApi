@@ -175,46 +175,32 @@ pub mod handler{
                         if nin_tags.is_some() {
                             nin.extend(nin_tags.unwrap().iter());
                         }
-                        let mut pipeline = vec![
-                            doc!{
-                                "$match":{
-                                    "created_at":{"$gt":1506787200},
-                                    "file_size":{"$lt":12*1024*1024},
-                                    "file_size":{"$gt":500*1024},
-                                    "rating_on_ml":"s"
-                                }
-                            }
-                        ];
-                        match params.get("min_size") {
+                        
+                        let min = match params.get("min_size") {
                             Some(v) => {
-                                let min = v.parse::<u32>().unwrap_or(640);
-                                let min_value = doc!{
-                                    "$match":{
-                                        "$and":[
-                                            {"jpeg_width":{"$gt":min as u32}},
-                                            {"jpeg_height":{"$gt":min as u32}}
-                                        ]
-                                      }
-                                };
-                                pipeline.push(min_value);
+                                v.parse::<u32>().unwrap_or(640)
                             },
-                            None => {},
+                            None => {640},
                         };
-                        let max_size = match params.get("max_size") {
+                        let max = match params.get("max_size") {
                             Some(v) => {
                                 v.parse::<u32>().unwrap_or(6144)
                             },
                             None => 6144,
                         };
-                        let max_value = doc!{
-                            "$match":{
-                                "$and":[
-                                    {"jpeg_width":{"$lt":max_size as u32}},
-                                    {"jpeg_height":{"$lt":max_size as u32}}
-                                ]
-                              }
-                        };
-                        pipeline.push(max_value);
+                        let mut pipeline = vec![
+                            doc!{
+                                "$match":{
+                                    "created_at":{"$gt":1506787200},
+                                    "file_size":{"$gt":500*1024, "$lt":12*1024*1024},
+                                    "rating_on_ml":"s",
+                                    "$and":[
+                                        {"jpeg_width":{"$gt":min, "$lt":max}},
+                                        {"jpeg_height":{"$gt":min, "$lt":max}}
+                                    ]
+                                }
+                            }
+                        ];
                         match horizontal {
                             Some(hor) => {
                                 let hor_value;
