@@ -80,7 +80,7 @@
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-0HFVJ9VV5D"></script>
 		<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.1/js/bootstrap.min.js"></script>
 		<script>
-			$.get("pic.re/status", function(data, status){
+			$.get("/status", function(data, status){
 				var traffic = data["data"]["traffic"]/1024.0/1024.0/1024.0;
 				traffic = traffic.toFixed(2);
 				$("#db-count").text("Serving " + data["data"]["count"] + " artworks.");
