@@ -36,7 +36,14 @@ pub mod api {
     pub fn api_sample_json(
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::get()
-            .and(warp::path("images.json"))
+            .and(warp::path("image.json"))
+            .and(warp::query::<HashMap<String, String>>())
+            .and_then(sample_image_post)
+    }
+    pub fn api_sample_json_post(
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::post()
+            .and(warp::path("image.json"))
             .and(warp::query::<HashMap<String, String>>())
             .and_then(sample_image_post)
     }
@@ -46,6 +53,28 @@ pub mod api {
             .and(warp::path("status"))
             .and_then(server_status)
     }
+    pub fn api_image_cors(
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::options().and(warp::path("image")).and_then(cors)
+    }
+    pub fn api_images_cors(
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::options().and(warp::path("images")).and_then(cors)
+    }
+    pub fn api_imagejson_cors(
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::options().and(warp::path("images")).and_then(cors)
+    }
+    pub async fn cors() -> Result<Response<String>, Rejection> {
+        let resp = Response::builder()
+            .header("Access-Control-Allow-Origin", "*")
+            .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            .header("Access-Control-Allow-Headers", "content-type")
+            .body("".to_string())
+            .unwrap();
+        Ok(resp)
+    }
+
     pub async fn server_status() -> Result<Response<String>, Rejection> {
         let mut status = ServerStatus::new();
         let call_count = call_count();
