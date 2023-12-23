@@ -1,6 +1,8 @@
 #[allow(dead_code)]
 pub mod api {
-    use crate::database::handler::handler::{call_count, image_count, last_time, sample_one, redis_incr_key, redis_get_value};
+    use crate::database::handler::handler::{
+        call_count, image_count, last_time, redis_get_value, redis_incr_key, sample_one,
+    };
     use crate::entity::config::config::CONFIG;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::status::status::ServerStatus;
@@ -55,6 +57,7 @@ pub mod api {
         status.data.traffic = traffic.unwrap_or(0);
         let resp = Response::builder()
             .header("content-type", "application/json")
+            .header("Access-Control-Allow-Origin", "*")
             .body(serde_json::to_string(&status).unwrap_or("".to_string()))
             .unwrap();
         Ok(resp)
@@ -102,7 +105,9 @@ pub mod api {
                 img_data.extend_from_slice(d.as_slice());
                 return Ok(img_data.len());
             }
-            Err(e) => {println!("read image error: {} {}", e, &full_name)}
+            Err(e) => {
+                println!("read image error: {} {}", e, &full_name)
+            }
         }
         return Err(0);
     }
@@ -138,9 +143,12 @@ pub mod api {
             None => None,
         };
 
-        let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
+        let image = sample_one(params.get("id"), nin, direction, params.clone())
+            .await
+            .unwrap();
         let resp = Response::builder()
             .header("content-type", "application/json")
+            .header("Access-Control-Allow-Origin", "*")
             .body(serde_json::to_string(&image).unwrap())
             .unwrap();
         Ok(resp)
@@ -159,7 +167,9 @@ pub mod api {
             Some(v) => Some(v == "horizontal"),
             None => None,
         };
-        let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
+        let image = sample_one(params.get("id"), nin, direction, params.clone())
+            .await
+            .unwrap();
         let compress = match params.get("compress") {
             None => true,
             Some(v) => {
@@ -190,8 +200,7 @@ pub mod api {
         }
         redis_incr_key("traffic", img_data.len());
         let read_time = SystemTime::now().duration_since(start_time).unwrap();
-        println!(
-            "read time: {:?}",read_time);
+        println!("read time: {:?}", read_time);
         let content_type = get_content_type(ext);
         let resp = Response::builder()
             .header("content-type", content_type)
@@ -232,11 +241,13 @@ pub mod api {
                 }
             }
         };
-        
-        let image = sample_one(params.get("id"), nin, direction, params.clone()).await.unwrap();
+
+        let image = sample_one(params.get("id"), nin, direction, params.clone())
+            .await
+            .unwrap();
         let ext = {
             if compress {
-                redis_incr_key("traffic", image.file_size/3);
+                redis_incr_key("traffic", image.file_size / 3);
                 "webp"
             } else {
                 redis_incr_key("traffic", image.file_size);
