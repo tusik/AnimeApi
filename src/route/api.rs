@@ -63,7 +63,7 @@ pub mod api {
     }
     pub fn api_imagejson_cors(
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::options().and(warp::path("images")).and_then(cors)
+        warp::options().and(warp::path("image.json")).and_then(cors)
     }
     pub async fn cors() -> Result<Response<String>, Rejection> {
         let resp = Response::builder()
