@@ -69,7 +69,7 @@ pub mod api {
         let resp = Response::builder()
             .header("Access-Control-Allow-Origin", "*")
             .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            .header("Access-Control-Allow-Headers", "content-type")
+            .header("Access-Control-Allow-Headers", "*")
             .body("".to_string())
             .unwrap();
         Ok(resp)
