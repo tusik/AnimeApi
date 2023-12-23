@@ -80,9 +80,10 @@ section h3.title{
 
 section p{
 	max-width: 800px;
-	text-align: center;
+	/* text-align: center; */
 	margin-bottom: 35px;
-	padding: 0 20px;
+	margin-top: 15px;
+	padding: 0px;
 	line-height: 2;
 }
 
@@ -455,4 +456,7 @@ footer p a{
 
 @media (max-width: 1200px) {
 	#bsaHolder{ display:none;}
+}
+.card{
+	margin-top: 50px;
 }

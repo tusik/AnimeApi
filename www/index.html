@@ -5,10 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Anime Picture Api</title>
-
-	<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css?family=Quicksand" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/4.6.0/css/font-awesome.css">
+	
+	<link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.1/css/bootstrap.min.css" rel="stylesheet">
+	
     <link rel="stylesheet" href="assets/css/styles.css">
 
 </head>
@@ -18,7 +17,7 @@
 	<header>
 		<h2><a href="#">Pic.re</a></h2>
 		<nav>
-			<li><a href="https://api.bi/docs/animeapi/">Document</a></li>
+			<li><a href="https://doc.pic.re">Document</a></li>
 		</nav>
 	</header>
 
@@ -27,30 +26,67 @@
 		<div class="background-image" style="background-image: url('/images');"></div>
 		<h1>Anime Picture Api</h1>
 		<h3>A free public Anime picture provider api.</h3>
-		<h4 id="api_image_status"></h4>
-		<span id="api_call_status"></span>
-		<span><br></span>
-		<a href="https://api.bi/docs/animeapi/" class="btn">How to use</a>
-	</section>
 
+		<span><br></span>
+		<a href="https://doc.pic.re" class="btn">How to use</a>
+	</section>
+	<section class="">
+		<div class="container">
+			<div class="row justify-content-center ">
+				<div class="col-lg-3">
+					<div class="card justify-content-center">
+						<img src="https://pic.re/image?max_size=1023" class="card-img-top" alt="...">
+						<div class="card-body">
+						<h5 class="card-title" >Big Data, No Biggie</h5>
+						<p class="card-text" id="db-count">Free API swiftly pinpoints it among 70,000+ records.</p>
+						</div>
+						
+					</div>
+				</div>
+				<div class="col-lg-3">
+					<div class="card justify-content-center">
+						<img src="https://pic.re/image?max_size=1024" class="card-img-top" alt="...">
+						<div class="card-body">
+						<h5 class="card-title" >Popular Pick, Free to Use</h5>
+						<p class="card-text " id="api-count">1.8 million free API calls show our service is reliable.</p>
+						</div>
+
+					</div>
+				</div>
+				<div class="col-lg-3">
+					<div class="card">
+						<img src="https://pic.re/image?max_size=1025" class="card-img-top" alt="...">
+						<div class="card-body">
+						<h5 class="card-title">Stable & Free</h5>
+						<p class="card-text" id="traffic-count">Even with 800GB, transfers are stable and on the house.</p>
+						</div>
+
+					</div>
+				</div>
+
+			</div>
+		</div>
+		
+	</section>
 
 	<footer>
 		<ul>
-			<li><a href="https://by.cx"><i class="fa fa-h-square"></i></a></li>
-			<li><a href="https://github.com/tusik"><i class="fa fa-github-square"></i></a></li>
+			<li><a href="https://by.cx"><svg xmlns="http://www.w3.org/2000/svg" height="48" width="32" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.--><path d="M192 32c0 17.7 14.3 32 32 32c123.7 0 224 100.3 224 224c0 17.7 14.3 32 32 32s32-14.3 32-32C512 128.9 383.1 0 224 0c-17.7 0-32 14.3-32 32zm0 96c0 17.7 14.3 32 32 32c70.7 0 128 57.3 128 128c0 17.7 14.3 32 32 32s32-14.3 32-32c0-106-86-192-192-192c-17.7 0-32 14.3-32 32zM96 144c0-26.5-21.5-48-48-48S0 117.5 0 144V368c0 79.5 64.5 144 144 144s144-64.5 144-144s-64.5-144-144-144H128v96h16c26.5 0 48 21.5 48 48s-21.5 48-48 48s-48-21.5-48-48V144z"/></svg></a></li>
+			<li><a href="https://github.com/tusik"><svg xmlns="http://www.w3.org/2000/svg" height="48" width="32" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.--><path d="M448 96c0-35.3-28.7-64-64-64H64C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96zM265.8 407.7c0-1.8 0-6 .1-11.6c.1-11.4 .1-28.8 .1-43.7c0-15.6-5.2-25.5-11.3-30.7c37-4.1 76-9.2 76-73.1c0-18.2-6.5-27.3-17.1-39c1.7-4.3 7.4-22-1.7-45c-13.9-4.3-45.7 17.9-45.7 17.9c-13.2-3.7-27.5-5.6-41.6-5.6s-28.4 1.9-41.6 5.6c0 0-31.8-22.2-45.7-17.9c-9.1 22.9-3.5 40.6-1.7 45c-10.6 11.7-15.6 20.8-15.6 39c0 63.6 37.3 69 74.3 73.1c-4.8 4.3-9.1 11.7-10.6 22.3c-9.5 4.3-33.8 11.7-48.3-13.9c-9.1-15.8-25.5-17.1-25.5-17.1c-16.2-.2-1.1 10.2-1.1 10.2c10.8 5 18.4 24.2 18.4 24.2c9.7 29.7 56.1 19.7 56.1 19.7c0 9 .1 21.7 .1 30.6c0 4.8 .1 8.6 .1 10c0 4.3-3 9.5-11.5 8C106 393.6 59.8 330.8 59.8 257.4c0-91.8 70.2-161.5 162-161.5s166.2 69.7 166.2 161.5c.1 73.4-44.7 136.3-110.7 158.3c-8.4 1.5-11.5-3.7-11.5-8zm-90.5-54.8c-.2-1.5 1.1-2.8 3-3.2c1.9-.2 3.7 .6 3.9 1.9c.3 1.3-1 2.6-3 3c-1.9 .4-3.7-.4-3.9-1.7zm-9.1 3.2c-2.2 .2-3.7-.9-3.7-2.4c0-1.3 1.5-2.4 3.5-2.4c1.9-.2 3.7 .9 3.7 2.4c0 1.3-1.5 2.4-3.5 2.4zm-14.3-2.2c-1.9-.4-3.2-1.9-2.8-3.2s2.4-1.9 4.1-1.5c2 .6 3.3 2.1 2.8 3.4c-.4 1.3-2.4 1.9-4.1 1.3zm-12.5-7.3c-1.5-1.3-1.9-3.2-.9-4.1c.9-1.1 2.8-.9 4.3 .6c1.3 1.3 1.8 3.3 .9 4.1c-.9 1.1-2.8 .9-4.3-.6zm-8.5-10c-1.1-1.5-1.1-3.2 0-3.9c1.1-.9 2.8-.2 3.7 1.3c1.1 1.5 1.1 3.3 0 4.1c-.9 .6-2.6 0-3.7-1.5zm-6.3-8.8c-1.1-1.3-1.3-2.8-.4-3.5c.9-.9 2.4-.4 3.5 .6c1.1 1.3 1.3 2.8 .4 3.5c-.9 .9-2.4 .4-3.5-.6zm-6-6.4c-1.3-.6-1.9-1.7-1.5-2.6c.4-.6 1.5-.9 2.8-.4c1.3 .7 1.9 1.8 1.5 2.6c-.4 .9-1.7 1.1-2.8 .4z"/></svg></a></li>
 		</ul>
 		<p>Made by <a href="https://docs.rs/warp" target="_blank">Rust Warp</a>. </p>
 		<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 		<!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-0HFVJ9VV5D"></script>
+		<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.1/js/bootstrap.min.js"></script>
 		<script>
-			$.get("/status", function(data, status){
+			$.get("pic.re/status", function(data, status){
 				var traffic = data["data"]["traffic"]/1024.0/1024.0/1024.0;
 				traffic = traffic.toFixed(2);
-				var text = "Provied " + data["data"]["count"] + " artworks.";
-				$("#api_image_status").text(text);
-				text = "Has been called "+ data["data"]["api_call_count"] + " Times. Traffic: " + traffic + " GB.";
-				$("#api_call_status").text(text);
+				$("#db-count").text("Serving " + data["data"]["count"] + " artworks.");
+				$("#api-count").text("Has been called "+ data["data"]["api_call_count"] + " Times.");
+				$("#traffic-count").text("Transfered " + traffic + " GB Data.");
+				
 				console.log(data);
 			});
 			window.dataLayer = window.dataLayer || [];
