@@ -239,7 +239,9 @@ pub mod handler {
                                 res.file_url = CONFIG.as_ref().unwrap().host.domain[0].clone()
                                     + "/"
                                     + &res.md5[0..2]
+                                    + "/"
                                     + &res.md5
+                                    + "."
                                     + &res.ext();
                                 image = Some(res);
                             }
