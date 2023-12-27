@@ -67,7 +67,7 @@ pub mod api {
         warp::options().and(warp::path("image.json")).and_then(cors)
     }
     pub fn api_tags() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::options().and(warp::path("tags")).and_then(tags)
+        warp::get().and(warp::path("tags")).and_then(tags)
     }
     pub async fn cors() -> Result<Response<String>, Rejection> {
         let resp = Response::builder()
