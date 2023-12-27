@@ -280,7 +280,9 @@ pub mod handler {
                         doc! {
                             "$match":{
                                 "rating_on_ml":"s"
-                            },
+                            }
+                        },
+                        doc! {
                             "$unwind":"$tags"
                         },
                         doc! {
