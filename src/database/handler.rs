@@ -293,7 +293,7 @@ pub mod handler {
                         },
                         doc! {
                             "$match":{
-                                "count":{"$gt":2}
+                                "count":{"$gt":10}
                             }
                         },
                         doc! {
