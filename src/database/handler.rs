@@ -278,6 +278,9 @@ pub mod handler {
                     let col: Collection<Document> = db.collection("artwork");
                     let pipeline = vec![
                         doc! {
+                            "$match":{
+                                "rating_on_ml":"s"
+                            },
                             "$unwind":"$tags"
                         },
                         doc! {
