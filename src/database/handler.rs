@@ -287,6 +287,11 @@ pub mod handler {
                             }
                         },
                         doc! {
+                            "$match":{
+                                "count":{"$gt":2}
+                            }
+                        },
+                        doc! {
                             "$sort":{
                                 "count":-1
                             }
