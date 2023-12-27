@@ -2,7 +2,7 @@
 use crate::entity::config::config::Config;
 use crate::route::api::api::{
     api_image_cors, api_imagejson_cors, api_images_cors, api_sample, api_sample_json,
-    api_sample_post, api_sample_red_post, api_server_status,
+    api_sample_post, api_sample_red_post, api_server_status, api_tags,
 };
 use crate::route::main_page::main_page::{css_static, index_static};
 use fast_log::consts::LogSize;
@@ -37,6 +37,7 @@ async fn main() {
         .or(api_image_cors())
         .or(api_imagejson_cors())
         .or(api_images_cors())
+        .or(api_tags())
         .or(index_static())
         .or(css_static())
         .or(image_static);
