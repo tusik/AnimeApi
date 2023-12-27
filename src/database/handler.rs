@@ -1,9 +1,11 @@
 pub mod handler {
     use std::collections::HashMap;
     use std::time::SystemTime;
+    use std::vec;
 
     use crate::entity::config::config::CONFIG;
     use crate::entity::image_detail::image_detail::ImageDetail;
+    use crate::entity::Tag;
     use futures::stream::StreamExt;
     use mongodb::bson::{doc, Document};
     use mongodb::{bson, Client, Collection};
@@ -256,5 +258,58 @@ pub mod handler {
             SystemTime::now().duration_since(start_time).unwrap()
         );
         image
+    }
+    pub async fn get_tags() -> Vec<Tag> {
+        unsafe {
+            if CLIENT.is_none() {
+                CLIENT = Some(
+                    Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str())
+                        .await
+                        .unwrap(),
+                );
+            }
+            let mut cursor;
+            match &CLIENT {
+                None => {
+                    vec![]
+                }
+                Some(client) => {
+                    let db = client.database("anime");
+                    let col: Collection<Document> = db.collection("artwork");
+                    let pipeline = vec![
+                        doc! {
+                            "$unwind":"$tags"
+                        },
+                        doc! {
+                            "$group":{
+                                "_id":"$tags",
+                                "count":{"$sum":1}
+                            }
+                        },
+                        doc! {
+                            "$sort":{
+                                "count":-1
+                            }
+                        },
+                    ];
+                    cursor = col.aggregate(pipeline, None).await.unwrap();
+                    let mut tags = vec![];
+                    while let Some(result) = cursor.next().await {
+                        match result {
+                            Ok(document) => {
+                                let tag = document.get_str("_id").unwrap_or_default();
+                                let count = document.get_i32("count").unwrap_or_default() as u32;
+                                tags.push(Tag {
+                                    name: tag.to_string(),
+                                    count: count,
+                                });
+                            }
+                            Err(_) => {}
+                        }
+                    }
+                    return tags;
+                }
+            }
+        }
     }
 }

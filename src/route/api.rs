@@ -1,11 +1,12 @@
 #[allow(dead_code)]
 pub mod api {
     use crate::database::handler::handler::{
-        call_count, image_count, last_time, redis_get_value, redis_incr_key, sample_one,
+        call_count, get_tags, image_count, last_time, redis_get_value, redis_incr_key, sample_one,
     };
     use crate::entity::config::config::CONFIG;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::status::status::ServerStatus;
+    use crate::entity::Tag;
     use serde_json;
     use std::collections::HashMap;
     use std::str::FromStr;
@@ -65,6 +66,9 @@ pub mod api {
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::options().and(warp::path("image.json")).and_then(cors)
     }
+    pub fn api_tags() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::options().and(warp::path("tags")).and_then(tags)
+    }
     pub async fn cors() -> Result<Response<String>, Rejection> {
         let resp = Response::builder()
             .header("Access-Control-Allow-Origin", "*")
@@ -74,7 +78,9 @@ pub mod api {
             .unwrap();
         Ok(resp)
     }
-
+    pub async fn tags() -> Result<String, Rejection> {
+        Ok(serde_json::to_string(&get_tags().await).unwrap())
+    }
     pub async fn server_status() -> Result<Response<String>, Rejection> {
         let mut status = ServerStatus::new();
         let call_count = call_count();
