@@ -1,6 +1,6 @@
 [package]
 name = "AnimeApi"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["image <image@by.cx>"]
 edition = "2018"
 
