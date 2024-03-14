@@ -86,8 +86,7 @@ pub mod handler {
             None => None,
         }
     }
-
-    pub async fn image_count() -> Option<u64> {
+    pub async fn get_client() -> Option<Client> {
         unsafe {
             if CLIENT.is_none() {
                 CLIENT = Some(
@@ -96,80 +95,76 @@ pub mod handler {
                         .unwrap(),
                 );
             }
-            match &CLIENT {
-                Some(client) => {
-                    let db = client.database("anime");
-                    let col: Collection<Document> = db.collection("artwork");
-                    let pipeline = vec![
-                        doc! {
-                            "$match":{
-                                "rating_on_ml":"s"
-                            }
-                        },
-                        doc! {
-                            "$count":"source"
-                        },
-                    ];
-                    let mut cur = col.aggregate(pipeline, None).await.unwrap();
-                    if let Some(result) = cur.next().await {
-                        match result {
-                            Ok(document) => {
-                                return Some(document.get_i32("source").unwrap_or_default() as u64);
-                            }
-                            Err(_) => {}
+            return CLIENT.clone();
+        }
+    }
+    pub async fn image_count() -> Option<u64> {
+        match &get_client().await {
+            Some(client) => {
+                let db = client.database("anime");
+                let col: Collection<Document> = db.collection("artwork");
+                let pipeline = vec![
+                    doc! {
+                        "$match":{
+                            "rating_on_ml":"s"
                         }
+                    },
+                    doc! {
+                        "$count":"source"
+                    },
+                ];
+                let mut cur = col.aggregate(pipeline, None).await.unwrap();
+                if let Some(result) = cur.next().await {
+                    match result {
+                        Ok(document) => {
+                            return Some(document.get_i32("source").unwrap_or_default() as u64);
+                        }
+                        Err(_) => {}
                     }
                 }
-                None => {
-                    return None;
-                }
             }
-            return Some(0);
+            None => {
+                return None;
+            }
         }
+        return Some(0);
+
     }
 
     pub async fn last_time() -> bson::DateTime {
-        unsafe {
-            if CLIENT.is_none() {
-                CLIENT = Some(
-                    Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str())
-                        .await
-                        .unwrap(),
-                );
-            }
-            match &CLIENT {
-                Some(client) => {
-                    let db = client.database("anime");
-                    let col: Collection<Document> = db.collection("artwork");
-                    let pipeline = vec![
-                        doc! {
-                            "$sort":{
-                                "created_at": -1i32
-                            }
-                        },
-                        doc! {
-                            "$limit":1i32
-                        },
-                    ];
-                    let mut cur = col.aggregate(pipeline, None).await.unwrap();
-                    if let Some(result) = cur.next().await {
-                        match result {
-                            Ok(document) => {
-                                let ts = document.get_i32("created_at").unwrap() as i64;
-                                return bson::DateTime::from_millis(ts * 1000);
-                            }
-                            Err(_) => {
-                                return bson::DateTime::from_millis(0);
-                            }
+        match &get_client().await {
+            Some(client) => {
+                let db = client.database("anime");
+                let col: Collection<Document> = db.collection("artwork");
+                let pipeline = vec![
+                    doc! {
+                        "$sort":{
+                            "created_at": -1i32
+                        }
+                    },
+                    doc! {
+                        "$limit":1i32
+                    },
+                ];
+                let mut cur = col.aggregate(pipeline, None).await.unwrap();
+                if let Some(result) = cur.next().await {
+                    return match result {
+                        Ok(document) => {
+                            let ts = document.get_i32("created_at").unwrap() as i64;
+                            bson::DateTime::from_millis(ts * 1000)
+                        }
+                        Err(_) => {
+                            bson::DateTime::from_millis(0)
                         }
                     }
                 }
-                None => {
-                    return bson::DateTime::from_millis(0);
-                }
             }
-            return bson::DateTime::from_millis(0);
+            None => {
+                return bson::DateTime::from_millis(0);
+            }
         }
+        return bson::DateTime::from_millis(0);
+
     }
 
     pub async fn sample_one(
@@ -181,124 +176,115 @@ pub mod handler {
         let start_time = SystemTime::now();
         redis_incr();
         let mut image = None;
-        unsafe {
-            if CLIENT.is_none() {
-                CLIENT = Some(
-                    Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str())
-                        .await
-                        .unwrap(),
-                );
-            }
-            let mut cursor = None;
-            match &CLIENT {
-                None => {}
-                Some(client) => {
-                    let db = client.database("anime");
-                    let col = db.collection("artwork");
-                    if id.is_some() {
-                        let find = doc! {
-                                "_id":id.unwrap().parse::<u32>().unwrap()
-                        };
-                        cursor = Some(col.find(find, None).await.unwrap());
-                    } else {
-                        let mut nin = vec![
-                            "nipples",
-                            "nude",
-                            "pussy",
-                            "pussy_juice",
-                            "uncensored",
-                            "breasts",
-                        ];
-                        if nin_tags.is_some() {
-                            nin.extend(nin_tags.unwrap().iter());
+        let mut cursor = None;
+        match &get_client().await {
+            None => {}
+            Some(client) => {
+                let db = client.database("anime");
+                let col = db.collection("artwork");
+                if id.is_some() {
+                    let find = doc! {
+                            "_id":id.unwrap().parse::<u32>().unwrap()
+                    };
+                    cursor = Some(col.find(find, None).await.unwrap());
+                } else {
+                    let mut nin = vec![
+                        "nipples",
+                        "nude",
+                        "pussy",
+                        "pussy_juice",
+                        "uncensored",
+                        "breasts",
+                    ];
+                    if nin_tags.is_some() {
+                        nin.extend(nin_tags.unwrap().iter());
+                    }
+
+                    let min = match params.get("min_size") {
+                        Some(v) => v.parse::<u32>().unwrap_or(640),
+                        None => 640,
+                    };
+                    let max = match params.get("max_size") {
+                        Some(v) => v.parse::<u32>().unwrap_or(6144),
+                        None => 6144,
+                    };
+                    let mut pipeline = vec![doc! {
+                        "$match":{
+                            "rating_on_ml":"s",
+                            "created_at":{"$gt":1506787200},
+                            "file_size":{"$gt":500*1024, "$lt":12*1024*1024},
+                            "$and":[
+                                {"jpeg_width":{"$gt":min, "$lt":max}},
+                                {"jpeg_height":{"$gt":min, "$lt":max}}
+                            ]
                         }
-
-                        let min = match params.get("min_size") {
-                            Some(v) => v.parse::<u32>().unwrap_or(640),
-                            None => 640,
-                        };
-                        let max = match params.get("max_size") {
-                            Some(v) => v.parse::<u32>().unwrap_or(6144),
-                            None => 6144,
-                        };
-                        let mut pipeline = vec![doc! {
-                            "$match":{
-                                "rating_on_ml":"s",
-                                "created_at":{"$gt":1506787200},
-                                "file_size":{"$gt":500*1024, "$lt":12*1024*1024},
-                                "$and":[
-                                    {"jpeg_width":{"$gt":min, "$lt":max}},
-                                    {"jpeg_height":{"$gt":min, "$lt":max}}
-                                ]
-                            }
-                        }];
-                        match horizontal {
-                            Some(hor) => {
-                                let hor_value;
-                                if hor {
-                                    hor_value = doc! {"$expr":{"$gt":["jpeg_width","jpeg_height"]}};
-                                } else {
-                                    hor_value = doc! {"$expr":{"$gt":["jpeg_height","jpeg_width"]}};
-                                }
-                                pipeline.push(hor_value);
-                            }
-                            None => {}
-                        }
-                        pipeline.push(doc! {
-                            "$sample":{
-                                "size":100
-                            }
-                        });
-
-                        let pipeline_str = serde_json::to_string(&pipeline).unwrap();
-                        {
-                            let mut cache = QUERY_CACHE.lock().await;
-
-                            // 尝试获取给定key的缓存
-                            let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
-
-                            if let Some(image_detail) = entry.pop() {
-                                // 如果能从vec中移除一个项，则对`image`变量赋值
-                                image = Some(image_detail);
+                    }];
+                    match horizontal {
+                        Some(hor) => {
+                            let hor_value;
+                            if hor {
+                                hor_value = doc! {"$expr":{"$gt":["jpeg_width","jpeg_height"]}};
                             } else {
-                                // 如果vec为空或不存在，则执行聚合查询
-                                match col.aggregate(pipeline, None).await {
-                                    Ok(cur) => cursor = Some(cur),
-                                    Err(e) => {
-                                        eprintln!("Error executing aggregate: {:?}", e);
-                                        return None;
-                                    }
+                                hor_value = doc! {"$expr":{"$gt":["jpeg_height","jpeg_width"]}};
+                            }
+                            pipeline.push(hor_value);
+                        }
+                        None => {}
+                    }
+                    pipeline.push(doc! {
+                        "$sample":{
+                            "size":100
+                        }
+                    });
+
+                    let pipeline_str = serde_json::to_string(&pipeline).unwrap();
+                    {
+                        let mut cache = QUERY_CACHE.lock().await;
+
+                        // 尝试获取给定key的缓存
+                        let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
+
+                        if let Some(image_detail) = entry.pop() {
+                            // 如果能从vec中移除一个项，则对`image`变量赋值
+                            image = Some(image_detail);
+                        } else {
+                            // 如果vec为空或不存在，则执行聚合查询
+                            match col.aggregate(pipeline, None).await {
+                                Ok(cur) => cursor = Some(cur),
+                                Err(e) => {
+                                    eprintln!("Error executing aggregate: {:?}", e);
+                                    return None;
                                 }
                             }
-
                         }
-                        if image.is_none() {
-                            if let Some(mut cur) = cursor {
-                                while let Ok(result) = cur.try_next().await {
-                                    match result {
-                                        Some(document) => {
-                                            let image_detail = match bson::from_document(document) {
-                                                Ok(detail) => detail,
-                                                Err(e) => {
-                                                    eprintln!("Error converting BSON to ImageDetail: {:?}", e);
-                                                    continue; // 跳过该项，处理下一项
-                                                }
-                                            };
 
-                                            if image.is_none() {
-                                                image = Some(image_detail);
-                                            } else {
-                                                let mut cache = QUERY_CACHE.clone();
-                                                let mut cache = cache.lock().await;
-                                                // 确保不会与其他任务冲突地更新缓存
-                                                let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
-                                                entry.push(image_detail);
-
+                    }
+                    if image.is_none() {
+                        if let Some(mut cur) = cursor {
+                            while let Ok(result) = cur.try_next().await {
+                                match result {
+                                    Some(document) => {
+                                        let image_detail = match bson::from_document(document) {
+                                            Ok(detail) => detail,
+                                            Err(e) => {
+                                                eprintln!("Error converting BSON to ImageDetail: {:?}", e);
+                                                continue; // 跳过该项，处理下一项
                                             }
+                                        };
+
+                                        if image.is_none() {
+                                            image = Some(image_detail);
+                                        } else {
+                                            let  cache = QUERY_CACHE.clone();
+                                            let mut cache = cache.lock().await;
+                                            // 确保不会与其他任务冲突地更新缓存
+                                            let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
+                                            entry.push(image_detail);
+
                                         }
-                                        None => {
-                                            break;
-                                        }
+                                    }
+                                    None => {
+                                        break;
                                     }
                                 }
                             }
@@ -326,65 +312,56 @@ pub mod handler {
         image
     }
     pub async fn get_tags() -> Vec<Tag> {
-        unsafe {
-            if CLIENT.is_none() {
-                CLIENT = Some(
-                    Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str())
-                        .await
-                        .unwrap(),
-                );
+        let mut cursor;
+        match &get_client().await {
+            None => {
+                vec![]
             }
-            let mut cursor;
-            match &CLIENT {
-                None => {
-                    vec![]
-                }
-                Some(client) => {
-                    let db = client.database("anime");
-                    let col: Collection<Document> = db.collection("artwork");
-                    let pipeline = vec![
-                        doc! {
-                            "$match":{
-                                "rating_on_ml":"s"
-                            }
-                        },
-                        doc! {
-                            "$unwind":"$tags"
-                        },
-                        doc! {
-                            "$group":{
-                                "_id":"$tags",
-                                "count":{"$sum":1}
-                            }
-                        },
-                        doc! {
-                            "$match":{
-                                "count":{"$gt":10}
-                            }
-                        },
-                        doc! {
-                            "$sort":{
-                                "count":-1
-                            }
-                        },
-                    ];
-                    cursor = col.aggregate(pipeline, None).await.unwrap();
-                    let mut tags = vec![];
-                    while let Some(result) = cursor.next().await {
-                        match result {
-                            Ok(document) => {
-                                let tag = document.get_str("_id").unwrap_or_default();
-                                let count = document.get_i32("count").unwrap_or_default() as u32;
-                                tags.push(Tag {
-                                    name: tag.to_string(),
-                                    count: count,
-                                });
-                            }
-                            Err(_) => {}
+            Some(client) => {
+                let db = client.database("anime");
+                let col: Collection<Document> = db.collection("artwork");
+                let pipeline = vec![
+                    doc! {
+                        "$match":{
+                            "rating_on_ml":"s"
                         }
+                    },
+                    doc! {
+                        "$unwind":"$tags"
+                    },
+                    doc! {
+                        "$group":{
+                            "_id":"$tags",
+                            "count":{"$sum":1}
+                        }
+                    },
+                    doc! {
+                        "$match":{
+                            "count":{"$gt":10}
+                        }
+                    },
+                    doc! {
+                        "$sort":{
+                            "count":-1
+                        }
+                    },
+                ];
+                cursor = col.aggregate(pipeline, None).await.unwrap();
+                let mut tags = vec![];
+                while let Some(result) = cursor.next().await {
+                    match result {
+                        Ok(document) => {
+                            let tag = document.get_str("_id").unwrap_or_default();
+                            let count = document.get_i32("count").unwrap_or_default() as u32;
+                            tags.push(Tag {
+                                name: tag.to_string(),
+                                count: count,
+                            });
+                        }
+                        Err(_) => {}
                     }
-                    return tags;
                 }
+                return tags;
             }
         }
     }

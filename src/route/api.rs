@@ -6,7 +6,6 @@ pub mod api {
     use crate::entity::config::config::CONFIG;
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::status::status::ServerStatus;
-    use crate::entity::Tag;
     use serde_json;
     use std::collections::HashMap;
     use std::str::FromStr;
