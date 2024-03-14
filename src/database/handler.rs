@@ -11,10 +11,17 @@ pub mod handler {
     use mongodb::{bson, Client, Collection};
     extern crate redis;
     use redis::Commands;
-    static mut CLIENT: Option<Client> = None;
-    static mut REDIS_CLIENT: Option<redis::Client> = None;
+    use tokio::sync::{Mutex};
+    use std::sync::Arc;
+    use once_cell::sync::Lazy;
+    use futures::TryStreamExt;
 
-    pub fn get_redis() -> &'static Option<redis::Client> {
+    static mut CLIENT:Option<Client> = None;
+    static mut REDIS_CLIENT:Option<redis::Client> = None;
+    static QUERY_CACHE: Lazy<Arc<Mutex<HashMap<String, Vec<ImageDetail>>>>> = Lazy::new(|| {
+        Arc::new(Mutex::new(HashMap::new()))
+    });
+    pub fn get_redis() -> &'static Option<redis::Client>{
         let redis_host;
         let r_client;
         unsafe {
@@ -27,6 +34,12 @@ pub mod handler {
         r_client
     }
     pub fn redis_incr() {
+        unsafe{
+            if CONFIG.as_ref().unwrap().system.dev{
+                return;
+            }
+        }
+
         let r_client = get_redis();
         match r_client {
             Some(c) => {
@@ -37,6 +50,11 @@ pub mod handler {
         }
     }
     pub fn redis_incr_key(key: &str, value: usize) {
+        unsafe{
+            if CONFIG.as_ref().unwrap().system.dev{
+                return;
+            }
+        }
         let r_client = get_redis();
         match r_client {
             Some(c) => {
@@ -171,7 +189,7 @@ pub mod handler {
                         .unwrap(),
                 );
             }
-            let mut cursor;
+            let mut cursor = None;
             match &CLIENT {
                 None => {}
                 Some(client) => {
@@ -181,7 +199,7 @@ pub mod handler {
                         let find = doc! {
                                 "_id":id.unwrap().parse::<u32>().unwrap()
                         };
-                        cursor = col.find(find, None).await.unwrap();
+                        cursor = Some(col.find(find, None).await.unwrap());
                     } else {
                         let mut nin = vec![
                             "nipples",
@@ -228,26 +246,62 @@ pub mod handler {
                         }
                         pipeline.push(doc! {
                             "$sample":{
-                                "size":1
+                                "size":100
                             }
                         });
-                        cursor = col.aggregate(pipeline, None).await.unwrap();
-                    }
 
-                    if let Some(result) = cursor.next().await {
-                        match result {
-                            Ok(document) => {
-                                let mut res: ImageDetail = bson::from_document(document).unwrap();
-                                res.file_url = CONFIG.as_ref().unwrap().host.domain[0].clone()
-                                    + "/"
-                                    + &res.md5[0..2]
-                                    + "/"
-                                    + &res.md5
-                                    + "."
-                                    + &res.ext();
-                                image = Some(res);
+                        let pipeline_str = serde_json::to_string(&pipeline).unwrap();
+                        {
+                            let mut cache = QUERY_CACHE.lock().await;
+
+                            // 尝试获取给定key的缓存
+                            let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
+
+                            if let Some(image_detail) = entry.pop() {
+                                // 如果能从vec中移除一个项，则对`image`变量赋值
+                                image = Some(image_detail);
+                            } else {
+                                // 如果vec为空或不存在，则执行聚合查询
+                                match col.aggregate(pipeline, None).await {
+                                    Ok(cur) => cursor = Some(cur),
+                                    Err(e) => {
+                                        eprintln!("Error executing aggregate: {:?}", e);
+                                        return None;
+                                    }
+                                }
                             }
-                            Err(_) => {}
+
+                        }
+                        if image.is_none() {
+                            if let Some(mut cur) = cursor {
+                                while let Ok(result) = cur.try_next().await {
+                                    match result {
+                                        Some(document) => {
+                                            let image_detail = match bson::from_document(document) {
+                                                Ok(detail) => detail,
+                                                Err(e) => {
+                                                    eprintln!("Error converting BSON to ImageDetail: {:?}", e);
+                                                    continue; // 跳过该项，处理下一项
+                                                }
+                                            };
+
+                                            if image.is_none() {
+                                                image = Some(image_detail);
+                                            } else {
+                                                let mut cache = QUERY_CACHE.clone();
+                                                let mut cache = cache.lock().await;
+                                                // 确保不会与其他任务冲突地更新缓存
+                                                let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
+                                                entry.push(image_detail);
+
+                                            }
+                                        }
+                                        None => {
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -257,6 +311,18 @@ pub mod handler {
             "mongo time: {:?}",
             SystemTime::now().duration_since(start_time).unwrap()
         );
+        unsafe {
+            let mut i = image.unwrap();
+            i.file_url = CONFIG.as_ref().unwrap().host.domain[0].clone()
+                + "/"
+                + &i.md5[0..2]
+                + "/"
+                + &i.md5
+                + "."
+                + &i.ext();
+            image = Some(i);
+        }
+
         image
     }
     pub async fn get_tags() -> Vec<Tag> {

@@ -24,6 +24,7 @@ pub mod config {
         pub origin_img: String,
         pub preview_img: String,
         pub webp_path: String,
+        pub dev:bool,
     }
     #[derive(Debug, Serialize, Deserialize)]
     pub struct HostConfig {
