@@ -281,7 +281,7 @@ pub mod api {
             .unwrap();
         let ext = get_file_ext(image.file_url.as_str());
 
-        let mut target_link: String = format!("{:}/{}/{}.{}", domain,&image.md5[0..2],&image.md5,ext);
+        let mut target_link: String = format!("https://{:}/{}/{}.{}", domain,&image.md5[0..2],&image.md5,ext);
 
         if compress {
             redis_incr_key("traffic", image.file_size / 3);
