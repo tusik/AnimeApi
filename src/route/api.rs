@@ -279,22 +279,20 @@ pub mod api {
         let image = sample_one(params.get("id"), nin, direction, params.clone())
             .await
             .unwrap();
-        let ext = {
-            if compress {
-                redis_incr_key("traffic", image.file_size / 3);
-                "webp"
-            } else {
-                redis_incr_key("traffic", image.file_size);
-                get_file_ext(image.file_url.as_str())
-            }
-        };
+        let ext = get_file_ext(image.file_url.as_str());
 
-        let mut target_link: String = format!("https://{:}/", domain);
+        let mut target_link: String = format!("{:}/", domain);
         target_link += &image.md5[0..2];
         target_link += "/";
         target_link += &image.md5;
         target_link += ".";
         target_link += ext;
+        if compress {
+            redis_incr_key("traffic", image.file_size / 3);
+            target_link += "_webp"
+        } else {
+            redis_incr_key("traffic", image.file_size);
+        }
         Ok(warp::redirect::temporary(
             Uri::from_str(target_link.as_str()).unwrap(),
         ))
