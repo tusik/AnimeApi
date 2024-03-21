@@ -294,7 +294,7 @@ pub mod api {
             redis_incr_key("traffic", image.file_size);
         }
         Ok(warp::redirect::temporary(
-            Uri::from_str(target_link.as_str()).unwrap(),
+            Uri::from_static(target_link.as_str()).unwrap(),
         ))
     }
 }
