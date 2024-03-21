@@ -10,7 +10,7 @@ pub mod api {
     use std::collections::HashMap;
     use std::str::FromStr;
     use std::time::SystemTime;
-    use warp::{http::Response, http::Uri, Filter, Rejection};
+    use warp::{http::Response, http::Uri, Filter, Rejection, hyper};
     pub fn api_sample() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
     {
         warp::get()
@@ -281,20 +281,19 @@ pub mod api {
             .unwrap();
         let ext = get_file_ext(image.file_url.as_str());
 
-        let mut target_link: String = format!("{:}/", domain);
-        target_link += &image.md5[0..2];
-        target_link += "/";
-        target_link += &image.md5;
-        target_link += ".";
-        target_link += ext;
+        let mut target_link: String = format!("{:}/{}/{}.{}", domain,&image.md5[0..2],&image.md5,ext);
+
         if compress {
             redis_incr_key("traffic", image.file_size / 3);
-            target_link += "_webp"
+            target_link = format!("{}_webp",target_link);
         } else {
             redis_incr_key("traffic", image.file_size);
         }
-        Ok(warp::redirect::temporary(
-            Uri::from_static(target_link.as_str()).unwrap(),
-        ))
+        Ok(
+            Response::builder()
+                .status(302)
+                .header("location",target_link)
+                .body(hyper::Body::empty())
+        )
     }
 }
