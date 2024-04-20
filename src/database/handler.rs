@@ -15,6 +15,7 @@ pub mod handler {
     use std::sync::Arc;
     use once_cell::sync::Lazy;
     use futures::TryStreamExt;
+    use crate::entity::condition::SearchCondition;
 
     static mut CLIENT:Option<Client> = None;
     static mut REDIS_CLIENT:Option<redis::Client> = None;
@@ -168,10 +169,7 @@ pub mod handler {
     }
 
     pub async fn sample_one(
-        id: Option<&String>,
-        nin_tags: Option<Vec<&str>>,
-        horizontal: Option<bool>,
-        params: HashMap<String, String>,
+        search_condition: SearchCondition
     ) -> Option<ImageDetail> {
         let start_time = SystemTime::now();
         redis_incr();
@@ -182,44 +180,29 @@ pub mod handler {
             Some(client) => {
                 let db = client.database("anime");
                 let col = db.collection("artwork");
-                if id.is_some() {
+                if search_condition.id.is_some() {
                     let find = doc! {
-                            "_id":id.unwrap().parse::<u32>().unwrap()
+                            "_id":search_condition.id
                     };
                     cursor = Some(col.find(find, None).await.unwrap());
                 } else {
-                    let mut nin = vec![
-                        "nipples",
-                        "nude",
-                        "pussy",
-                        "pussy_juice",
-                        "uncensored",
-                        "breasts",
-                    ];
-                    if nin_tags.is_some() {
-                        nin.extend(nin_tags.unwrap().iter());
+                    let mut nin:Vec<String> = vec![];
+                    if search_condition.exclude_tags.is_some() {
+                        nin.extend(search_condition.exclude_tags.unwrap());
                     }
 
-                    let min = match params.get("min_size") {
-                        Some(v) => v.parse::<u32>().unwrap_or(640),
-                        None => 640,
-                    };
-                    let max = match params.get("max_size") {
-                        Some(v) => v.parse::<u32>().unwrap_or(6144),
-                        None => 6144,
-                    };
                     let mut pipeline = vec![doc! {
                         "$match":{
                             "rating_on_ml":"s",
                             "created_at":{"$gt":1506787200},
                             "file_size":{"$gt":500*1024, "$lt":12*1024*1024},
                             "$and":[
-                                {"jpeg_width":{"$gt":min, "$lt":max}},
-                                {"jpeg_height":{"$gt":min, "$lt":max}}
+                                {"jpeg_width":{"$gt":search_condition.min_size, "$lt":search_condition.max_size}},
+                                {"jpeg_height":{"$gt":search_condition.min_size, "$lt":search_condition.max_size}}
                             ]
                         }
                     }];
-                    match horizontal {
+                    match search_condition.horizontal {
                         Some(hor) => {
                             let hor_value;
                             if hor {

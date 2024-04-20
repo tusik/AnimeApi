@@ -1,3 +1,4 @@
+
 #[allow(dead_code)]
 pub mod api {
     use crate::database::handler::handler::{
@@ -8,9 +9,10 @@ pub mod api {
     use crate::entity::status::status::ServerStatus;
     use serde_json;
     use std::collections::HashMap;
-    use std::str::FromStr;
     use std::time::SystemTime;
-    use warp::{http::Response, http::Uri, Filter, Rejection, hyper};
+    use warp::{http::Response, Filter, Rejection, hyper};
+    use crate::entity::condition::SearchCondition;
+
     pub fn api_sample() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
     {
         warp::get()
@@ -146,14 +148,14 @@ pub mod api {
         return Err(0);
     }
     pub fn get_content_type(ext: &str) -> &'static str {
-        if ext == "png" {
-            return "image/png";
+        return if ext == "png" {
+            "image/png"
         } else if ext == "jpg" {
-            return "image/jpeg";
+            "image/jpeg"
         } else if ext == "webp" {
-            return "image/webp";
+            "image/webp"
         } else {
-            return "image/jpeg";
+            "image/jpeg"
         }
     }
     pub fn get_file_ext(filename: &str) -> &str {
@@ -165,19 +167,9 @@ pub mod api {
     pub async fn sample_image_post(
         params: HashMap<String, String>,
     ) -> Result<Response<String>, Rejection> {
-        let mut nin: Option<Vec<&str>> = None;
-        match params.get("nin") {
-            None => {}
-            Some(item) => {
-                nin = Some(item.split(",").collect());
-            }
-        }
-        let direction = match params.get("direction") {
-            Some(v) => Some(v == "horizontal"),
-            None => None,
-        };
+        let condition = SearchCondition::parse(params)?;
 
-        let image = sample_one(params.get("id"), nin, direction, params.clone())
+        let image = sample_one(condition)
             .await
             .unwrap();
         let resp = Response::builder()
@@ -190,31 +182,12 @@ pub mod api {
     pub async fn sample_image(
         params: HashMap<String, String>,
     ) -> Result<Response<Vec<u8>>, Rejection> {
-        let mut nin: Option<Vec<&str>> = None;
-        match params.get("nin") {
-            None => {}
-            Some(item) => {
-                nin = Some(item.split(",").collect());
-            }
-        }
-        let direction = match params.get("direction") {
-            Some(v) => Some(v == "horizontal"),
-            None => None,
-        };
-        let image = sample_one(params.get("id"), nin, direction, params.clone())
+        let condition = SearchCondition::parse(params)?;
+        let image = sample_one(condition.clone())
             .await
             .unwrap();
-        let compress = match params.get("compress") {
-            None => true,
-            Some(v) => {
-                if v == "true" {
-                    true
-                } else {
-                    false
-                }
-            }
-        };
 
+        let compress = condition.clone().compress.unwrap();
         let ext = {
             if compress {
                 "webp"
@@ -248,35 +221,18 @@ pub mod api {
     pub async fn sample_image_redirect(
         params: HashMap<String, String>,
     ) -> Result<impl warp::Reply, warp::Rejection> {
+
+        let condition = SearchCondition::parse(params)?;
         let domain = unsafe {
             let config = CONFIG.as_ref().unwrap();
             let domain_index = 0;
 
             config.host.domain[domain_index].as_str()
         };
-        let mut nin: Option<Vec<&str>> = None;
-        match params.get("nin") {
-            None => {}
-            Some(item) => {
-                nin = Some(item.split(",").collect());
-            }
-        }
-        let direction = match params.get("direction") {
-            Some(v) => Some(v == "horizontal"),
-            None => None,
-        };
-        let compress = match params.get("compress") {
-            None => true,
-            Some(v) => {
-                if v == "true" {
-                    true
-                } else {
-                    false
-                }
-            }
-        };
 
-        let image = sample_one(params.get("id"), nin, direction, params.clone())
+        let compress = condition.clone().compress.unwrap();
+
+        let image = sample_one(condition)
             .await
             .unwrap();
         let ext = get_file_ext(image.file_url.as_str());
