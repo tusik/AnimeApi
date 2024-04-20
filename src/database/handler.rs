@@ -11,87 +11,72 @@ pub mod handler {
     use mongodb::{bson, Client, Collection};
     extern crate redis;
     use redis::Commands;
-    use tokio::sync::{Mutex};
+    use tokio::sync::{Mutex, OnceCell};
     use std::sync::Arc;
-    use once_cell::sync::Lazy;
     use futures::TryStreamExt;
     use crate::entity::condition::SearchCondition;
 
     static mut CLIENT:Option<Client> = None;
-    static mut REDIS_CLIENT:Option<redis::Client> = None;
-    static QUERY_CACHE: Lazy<Arc<Mutex<HashMap<String, Vec<ImageDetail>>>>> = Lazy::new(|| {
-        Arc::new(Mutex::new(HashMap::new()))
-    });
-    pub fn get_redis() -> &'static Option<redis::Client>{
-        let redis_host;
-        let r_client;
-        unsafe {
-            redis_host = CONFIG.as_ref().unwrap().host.redis.as_str();
-            if REDIS_CLIENT.is_none() {
-                REDIS_CLIENT = Some(redis::Client::open(redis_host).expect("unable to open"));
-            }
-            r_client = &REDIS_CLIENT;
-        }
-        r_client
+    static REDIS_CLIENT: OnceCell<Arc<Mutex<redis::Client>>> = OnceCell::const_new();
+
+    static QUERY_CACHE: OnceCell<Arc<Mutex<HashMap<String, Vec<ImageDetail>>>>> = OnceCell::const_new();
+    pub fn init_query_cache(){
+        let cache = Arc::new(Mutex::new(HashMap::new()));
+        QUERY_CACHE.set(cache).ok();
     }
-    pub fn redis_incr() {
-        unsafe{
-            if CONFIG.as_ref().unwrap().system.dev{
-                return;
-            }
+    pub fn init_redis(){
+        let config = CONFIG.get().expect("");
+        let dev = config.system.dev;
+        let host = config.host.clone().redis;
+        if dev{
+            return;
+        }
+        let client = Arc::new(Mutex::new(redis::Client::open(host.as_str()).expect("connect redis failed")));
+        REDIS_CLIENT.set(client.clone()).expect("Failed to set Redis client");
+    }
+    pub fn get_redis() -> Arc<Mutex<redis::Client>> {
+        REDIS_CLIENT.get().cloned().expect("Redis client is not initialized")
+    }
+    pub async fn redis_incr() {
+        let config = CONFIG.get().expect("");
+        if config.system.dev{
+            return;
         }
 
         let r_client = get_redis();
-        match r_client {
-            Some(c) => {
-                let mut con = c.get_connection().expect("Unable to connecet redis");
-                let _: () = con.incr("cv", 1).expect("incr count failed");
-            }
-            None => {}
-        }
+        let mut con = r_client.lock().await.get_connection().expect("Unable to connecet redis");
+        let _: () = con.incr("cv", 1).expect("incr count failed");
     }
-    pub fn redis_incr_key(key: &str, value: usize) {
-        unsafe{
-            if CONFIG.as_ref().unwrap().system.dev{
-                return;
-            }
+    pub async fn redis_incr_key(key: &str, value: usize) {
+        let config = CONFIG.get().expect("");
+        if config.system.dev{
+            return;
         }
         let r_client = get_redis();
-        match r_client {
-            Some(c) => {
-                let mut con = c.get_connection().expect("Unable to connecet redis");
-                let _: () = con.incr(key, value).expect("incr count failed");
-            }
-            None => {}
-        }
+        let mut con = r_client.lock().await.get_connection().expect("Unable to connecet redis");
+        let _: () = con.incr(key, value).expect("incr count failed");
+
     }
-    pub fn redis_get_value(key: &str) -> Option<u64> {
+    pub async fn redis_get_value(key: &str) -> Option<u64> {
         let r_client = get_redis();
-        match r_client {
-            Some(c) => {
-                let mut con = c.get_connection().expect("Unable to connecet redis");
-                let v = con.get(key).expect("failed get redis value");
-                v
-            }
-            None => None,
-        }
+        let mut con = r_client.lock().await.get_connection().expect("Unable to connecet redis");
+        let v = con.get(key).expect("failed get redis value");
+        v
+
     }
-    pub fn call_count() -> Option<u64> {
+    pub async fn call_count() -> Option<u64> {
         let r_client = get_redis();
-        match r_client {
-            Some(c) => {
-                let mut con = c.get_connection().expect("Unable to connecet redis");
-                let cv = con.get("cv").expect("failed get cv");
-                cv
-            }
-            None => None,
-        }
+        let mut con = r_client.lock().await.get_connection().expect("Unable to connecet redis");
+        let cv = con.get("cv").expect("failed get cv");
+        cv
     }
     pub async fn get_client() -> Option<Client> {
+        let config = CONFIG.get()?;
+        let uri = &config.clone().system.mongo_uri;
         unsafe {
             if CLIENT.is_none() {
                 CLIENT = Some(
-                    Client::with_uri_str(CONFIG.as_ref().unwrap().system.mongo_uri.as_str())
+                    Client::with_uri_str(uri)
                         .await
                         .unwrap(),
                 );
@@ -172,7 +157,7 @@ pub mod handler {
         search_condition: SearchCondition
     ) -> Option<ImageDetail> {
         let start_time = SystemTime::now();
-        redis_incr();
+        redis_incr().await;
         let mut image = None;
         let mut cursor = None;
         match &get_client().await {
@@ -222,7 +207,8 @@ pub mod handler {
 
                     let pipeline_str = serde_json::to_string(&pipeline).unwrap();
                     {
-                        let mut cache = QUERY_CACHE.lock().await;
+                        let cache =QUERY_CACHE.get().cloned().expect("QUERY_CACHE is not initialized");
+                        let mut cache = cache.lock().await;
 
                         // 尝试获取给定key的缓存
                         let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
@@ -258,7 +244,7 @@ pub mod handler {
                                         if image.is_none() {
                                             image = Some(image_detail);
                                         } else {
-                                            let  cache = QUERY_CACHE.clone();
+                                            let cache =QUERY_CACHE.get().cloned().expect("QUERY_CACHE is not initialized");
                                             let mut cache = cache.lock().await;
                                             // 确保不会与其他任务冲突地更新缓存
                                             let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
@@ -280,17 +266,18 @@ pub mod handler {
             "mongo time: {:?}",
             SystemTime::now().duration_since(start_time).unwrap()
         );
-        unsafe {
-            let mut i = image.unwrap();
-            i.file_url = CONFIG.as_ref().unwrap().host.domain[0].clone()
-                + "/"
-                + &i.md5[0..2]
-                + "/"
-                + &i.md5
-                + "."
-                + &i.ext();
-            image = Some(i);
-        }
+        let config = CONFIG.get()?;
+        let domain = &config.host.domain[0].clone();
+        let mut i = image.unwrap();
+        i.file_url = domain.as_str().to_owned()
+            + "/"
+            + &i.md5[0..2]
+            + "/"
+            + &i.md5
+            + "."
+            + &i.ext();
+        image = Some(i);
+
 
         image
     }

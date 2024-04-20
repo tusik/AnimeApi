@@ -11,13 +11,16 @@
 pub mod config {
     use serde::Deserialize;
     use serde::Serialize;
-    pub static mut CONFIG: Option<Config> = None;
-    #[derive(Debug, Serialize, Deserialize)]
+    use tokio::sync::OnceCell;
+
+    pub static CONFIG: OnceCell<Config> = OnceCell::const_new();
+
+    #[derive(Debug,Clone, Serialize, Deserialize)]
     pub struct Config {
         pub system: SystemConfig,
         pub host: HostConfig,
     }
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug,Clone, Serialize, Deserialize)]
     pub struct SystemConfig {
         pub mongo_uri: String,
         pub path: String,
@@ -26,7 +29,7 @@ pub mod config {
         pub webp_path: String,
         pub dev:bool,
     }
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug,Clone, Serialize, Deserialize)]
     pub struct HostConfig {
         pub domain: Vec<String>,
         pub redis: String,
@@ -43,10 +46,7 @@ pub mod config {
                     panic!("error load config")
                 }
             }
-            unsafe {
-                CONFIG = Some(c);
-            }
-            
+            CONFIG.set(c).expect("Error load config");
         }
     }
 }

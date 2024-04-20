@@ -84,9 +84,9 @@ pub mod api {
     }
     pub async fn server_status() -> Result<Response<String>, Rejection> {
         let mut status = ServerStatus::new();
-        let call_count = call_count();
+        let call_count = call_count().await;
         let size = image_count().await;
-        let traffic = redis_get_value("traffic");
+        let traffic = redis_get_value("traffic").await;
         status.data.count = size.unwrap_or(0);
         status.data.last_update = last_time().await.to_string();
         status.data.api_call_count = call_count.expect("fetch call count failed");
@@ -107,20 +107,18 @@ pub mod api {
         let tmp_string: Vec<&str> = image.file_url.split("/").collect();
         let ext_tmp: Vec<&str> = tmp_string.last().unwrap().split(".").collect();
         let ext = ext_tmp.last().unwrap();
-        let path_prefix;
-        let origin_prefix;
-        // let preview_prefix;
-        let webp_prefix;
-        unsafe {
-            path_prefix = CONFIG.as_ref().unwrap().system.path.as_str();
-            origin_prefix = CONFIG.as_ref().unwrap().system.origin_img.as_str();
-            // preview_prefix = CONFIG.as_ref().unwrap().system.preview_img.as_str();
-            webp_prefix = CONFIG.as_ref().unwrap().system.webp_path.as_str();
-        }
+
+        let config = CONFIG.get().expect("error load config");
+        let sys_config = &config.system.clone();
+        // 使用 let 绑定来存储 String 克隆
+        let path_string = sys_config.path.clone();
+        let origin_string = sys_config.origin_img.clone();
+        let webp_string = sys_config.webp_path.clone();
+
         let mut full_name = format!(
             "{}/{}/{}/{}.{}",
-            &path_prefix,
-            &origin_prefix,
+            path_string,
+            origin_string,
             &md5[0..2],
             &md5,
             ext
@@ -128,8 +126,8 @@ pub mod api {
         if compress {
             full_name = format!(
                 "{}/{}/{}/{}.{}",
-                &path_prefix,
-                &webp_prefix,
+                path_string,
+                webp_string,
                 &md5[0..2],
                 &md5,
                 "webp"
@@ -205,7 +203,7 @@ pub mod api {
                 .unwrap();
             return Ok(resp);
         }
-        redis_incr_key("traffic", img_data.len());
+        redis_incr_key("traffic", img_data.len()).await;
         let read_time = SystemTime::now().duration_since(start_time).unwrap();
         println!("read time: {:?}", read_time);
         let content_type = get_content_type(ext);
@@ -223,8 +221,8 @@ pub mod api {
     ) -> Result<impl warp::Reply, warp::Rejection> {
 
         let condition = SearchCondition::parse(params)?;
-        let domain = unsafe {
-            let config = CONFIG.as_ref().unwrap();
+        let domain = {
+            let config = CONFIG.get().expect("");
             let domain_index = 0;
 
             config.host.domain[domain_index].as_str()
@@ -240,10 +238,10 @@ pub mod api {
         let mut target_link: String = format!("https://{:}/{}/{}.{}", domain,&image.md5[0..2],&image.md5,ext);
 
         if compress {
-            redis_incr_key("traffic", image.file_size / 3);
+            redis_incr_key("traffic", image.file_size / 3).await;
             target_link = format!("{}_webp",target_link);
         } else {
-            redis_incr_key("traffic", image.file_size);
+            redis_incr_key("traffic", image.file_size).await;
         }
         Ok(
             Response::builder()
