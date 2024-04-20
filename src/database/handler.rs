@@ -16,13 +16,21 @@ pub mod handler {
     use futures::TryStreamExt;
     use crate::entity::condition::SearchCondition;
 
-    static mut CLIENT:Option<Client> = None;
+    static CLIENT:OnceCell<Arc<Client>> = OnceCell::const_new();
     static REDIS_CLIENT: OnceCell<Arc<Mutex<redis::Client>>> = OnceCell::const_new();
 
     static QUERY_CACHE: OnceCell<Arc<Mutex<HashMap<String, Vec<ImageDetail>>>>> = OnceCell::const_new();
     pub fn init_query_cache(){
         let cache = Arc::new(Mutex::new(HashMap::new()));
         QUERY_CACHE.set(cache).ok();
+    }
+    pub async fn init_mongo(){
+        let config = CONFIG.get().expect("failed mongo client");
+        let uri = &config.clone().system.mongo_uri;
+        let client = Client::with_uri_str(uri)
+            .await
+            .unwrap();
+        CLIENT.set(Arc::new(client)).expect("")
     }
     pub fn init_redis(){
         let config = CONFIG.get().expect("");
@@ -70,19 +78,8 @@ pub mod handler {
         let cv = con.get("cv").expect("failed get cv");
         cv
     }
-    pub async fn get_client() -> Option<Client> {
-        let config = CONFIG.get()?;
-        let uri = &config.clone().system.mongo_uri;
-        unsafe {
-            if CLIENT.is_none() {
-                CLIENT = Some(
-                    Client::with_uri_str(uri)
-                        .await
-                        .unwrap(),
-                );
-            }
-            return CLIENT.clone();
-        }
+    pub async fn get_client() -> Option<Arc<Client>> {
+        Some(Arc::clone(CLIENT.get().expect("")))
     }
     pub async fn image_count() -> Option<u64> {
         match &get_client().await {

@@ -9,7 +9,7 @@ use fast_log::consts::LogSize;
 use fast_log::plugin::file_split::RollingType;
 use fast_log::plugin::packer::LogPacker;
 use warp::Filter;
-use crate::database::handler::handler::{init_query_cache, init_redis};
+use crate::database::handler::handler::{init_mongo, init_query_cache, init_redis};
 
 mod database;
 mod entity;
@@ -30,6 +30,7 @@ async fn main() {
     Config::load().await;
     init_redis();
     init_query_cache();
+    init_mongo().await;
     println!("Hello, world!");
     let image_static = warp::path!("static" / "image" / ..).and(warp::fs::dir("./www"));
     let routes = api_sample_post()
