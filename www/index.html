@@ -18,6 +18,14 @@
 		<h2><a href="#">Pic.re</a></h2>
 		<nav>
 			<li><a href="https://moe.sale">Demo</a></li>
+			<!-- 添加一个下拉菜单-->
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Plugins</a>
+				<ul class="dropdown-menu">
+					<li><a class="dropdown-item" href="https://plugins.jetbrains.com/plugin/24369-background-image-pro/">Intellij IDEs</a></li>
+				</ul>
+			</li>
+
 			<li><a href="https://status.kurumi.tech">Status</a></li>
 			<li><a href="https://doc.pic.re">Document</a></li>
 		</nav>
@@ -81,6 +89,7 @@
 		<!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-0HFVJ9VV5D"></script>
 		<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.1/js/bootstrap.min.js"></script>
+		<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.1/js/bootstrap.bundle.min.js"></script>
 		<script>
 			$.get("/status", function(data, status){
 				var traffic = data["data"]["traffic"]/1024.0/1024.0/1024.0;
