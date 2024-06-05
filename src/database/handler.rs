@@ -7,13 +7,15 @@ pub mod handler {
     use crate::entity::image_detail::image_detail::ImageDetail;
     use crate::entity::Tag;
     use futures::stream::StreamExt;
-    use mongodb::bson::{doc, Document};
+    use mongodb::bson::{DateTime, doc, Document};
     use mongodb::{bson, Client, Collection};
     extern crate redis;
     use redis::Commands;
     use tokio::sync::{Mutex, OnceCell};
     use std::sync::Arc;
+    use chrono::Timelike;
     use futures::TryStreamExt;
+    use mongodb::options::FindOneAndUpdateOptions;
     use crate::entity::condition::SearchCondition;
 
     static CLIENT:OnceCell<Arc<Client>> = OnceCell::const_new();
@@ -77,6 +79,35 @@ pub mod handler {
         let mut con = r_client.lock().await.get_connection().expect("Unable to connecet redis");
         let cv = con.get("cv").expect("failed get cv");
         cv
+    }
+    pub async fn incr_call_count_hour() {
+        match &crate::database::handler::handler::get_client().await {
+            None => {}
+            Some(client) => {
+                let db = client.database("anime");
+                let collection: Collection<Document> = db.collection("api_statistic");
+                let mut current_timestamp = chrono::Utc::now();
+                current_timestamp = current_timestamp.with_minute(0).unwrap();
+                current_timestamp = current_timestamp.with_second(0).unwrap();
+                current_timestamp = current_timestamp.with_nanosecond(0).unwrap();
+                // 将当前时间转换为 UNIX 毫秒时间戳
+                let current_timestamp_millis = current_timestamp.timestamp_millis();
+
+                // 将毫秒时间戳转换为 MongoDB 的 DateTime
+                let bson_timestamp = DateTime::from_millis(current_timestamp_millis as i64);
+                let filter = doc! { "time": bson_timestamp };
+                let update = doc! { "$inc": { "count": 1 } };
+                let update_options = FindOneAndUpdateOptions::builder()
+                    .upsert(true) // 如果文档不存在，则插入新文档
+                    .return_document(mongodb::options::ReturnDocument::After) // 返回更新后的文档
+                    .build();
+                collection
+                    .find_one_and_update(filter, update, update_options)
+                    .await
+                    .expect("Failed to perform findAndModify");
+
+            }
+        }
     }
     pub async fn get_client() -> Option<Arc<Client>> {
         Some(Arc::clone(CLIENT.get().expect("")))
@@ -155,7 +186,8 @@ pub mod handler {
     ) -> Option<ImageDetail> {
         let start_time = SystemTime::now();
         redis_incr().await;
-        let mut image = None;
+        incr_call_count_hour().await;
+        let mut image:Option<ImageDetail> = None;
         let mut cursor = None;
         match &get_client().await {
             None => {}
@@ -167,6 +199,15 @@ pub mod handler {
                             "_id":search_condition.id
                     };
                     cursor = Some(col.find(find, None).await.unwrap());
+                    image = cursor.unwrap().next().await.unwrap().ok().map(|document:Document| {
+                        return match bson::from_document::<ImageDetail>(document) {
+                            Ok(detail) => Some(detail),
+                            Err(e) => {
+                                eprintln!("Error converting BSON to ImageDetail: {:?}", e);
+                                None
+                            }
+                        };
+                    }).flatten();
                 } else {
                     let mut nin:Vec<String> = vec![];
                     if search_condition.exclude_tags.is_some() {
@@ -263,20 +304,23 @@ pub mod handler {
             "mongo time: {:?}",
             SystemTime::now().duration_since(start_time).unwrap()
         );
-        let config = CONFIG.get()?;
-        let domain = &config.host.domain[0].clone();
-        let mut i = image.unwrap();
-        i.file_url = domain.as_str().to_owned()
-            + "/"
-            + &i.md5[0..2]
-            + "/"
-            + &i.md5
-            + "."
-            + &i.ext();
-        image = Some(i);
+        if let Some(mut i) = image {
+            let config = CONFIG.get()?;
+            let domain = &config.host.domain[0];
 
+            i.file_url = format!(
+                "{}/{}/{}.{}",
+                domain,
+                &i.md5[0..2],
+                &i.md5,
+                i.ext()
+            );
 
-        image
+            Some(i)
+        } else {
+            None
+        }
+
     }
     pub async fn get_tags() -> Vec<Tag> {
         let mut cursor;
