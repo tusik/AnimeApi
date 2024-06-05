@@ -101,14 +101,11 @@ pub mod handler {
                     .upsert(true) // 如果文档不存在，则插入新文档
                     .return_document(mongodb::options::ReturnDocument::After) // 返回更新后的文档
                     .build();
-                let result = collection
+                collection
                     .find_one_and_update(filter, update, update_options)
                     .await
                     .expect("Failed to perform findAndModify");
 
-                if let Some(doc) = result {
-                    doc.get("count").and_then(|count| count.as_i64()).unwrap();
-                }
             }
         }
     }
