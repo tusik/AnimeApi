@@ -222,7 +222,8 @@ pub mod handler {
                             "$and":[
                                 {"jpeg_width":{"$gt":search_condition.min_size, "$lt":search_condition.max_size}},
                                 {"jpeg_height":{"$gt":search_condition.min_size, "$lt":search_condition.max_size}}
-                            ]
+                            ],
+                            "tags":{"$nin":nin}
                         }
                     }];
                     match search_condition.horizontal {
