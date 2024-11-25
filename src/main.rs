@@ -5,8 +5,7 @@ use crate::route::api::api::{
     api_sample_post, api_sample_red_post, api_server_status, api_tags,
 };
 use crate::route::main_page::main_page::{css_static, index_static};
-use fast_log::consts::LogSize;
-use fast_log::plugin::file_split::RollingType;
+use fast_log::plugin::file_split::{DateType, KeepType, Rolling, RollingType};
 use fast_log::plugin::packer::LogPacker;
 use warp::Filter;
 use crate::database::handler::handler::{init_mongo, init_query_cache, init_redis};
@@ -21,8 +20,8 @@ async fn main() {
 
     fast_log::init(fast_log::config::Config::new().console().file_split(
         "logs/",
-        LogSize::MB(4),
-        RollingType::All,
+        Rolling::new(RollingType::ByDate(DateType::Day)),
+        KeepType::KeepNum(5),
         LogPacker {},
     ))
     .unwrap();
