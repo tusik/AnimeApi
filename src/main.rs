@@ -10,6 +10,7 @@ use fast_log::plugin::file_split::RollingType;
 use fast_log::plugin::packer::LogPacker;
 use warp::Filter;
 use crate::database::handler::handler::{init_mongo, init_query_cache, init_redis};
+use std::env;
 
 mod database;
 mod entity;
@@ -17,6 +18,7 @@ mod route;
 mod util;
 #[tokio::main]
 async fn main() {
+    env::set_var("RUST_LOG", "warp=info");
     tokio::fs::create_dir_all("logs/").await.unwrap();
 
     fast_log::init(fast_log::config::Config::new().console().file_split(
