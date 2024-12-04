@@ -169,7 +169,7 @@ pub mod api {
 
         let image = sample_one(condition)
             .await
-            .unwrap();
+            .unwrap_or_default();
         let resp = Response::builder()
             .header("content-type", "application/json")
             .header("Access-Control-Allow-Origin", "*")

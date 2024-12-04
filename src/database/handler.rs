@@ -212,10 +212,10 @@ pub mod handler {
                     let mut nin:Vec<String> = vec![];
                     let mut in_tag:Vec<String> = vec![];
                     if search_condition.exclude_tags.is_some() {
-                        nin.extend(search_condition.exclude_tags.unwrap());
+                        nin.extend(search_condition.exclude_tags.clone().unwrap());
                     }
                     if search_condition.include_tags.is_some() {
-                        in_tag.extend(search_condition.include_tags.unwrap());
+                        in_tag.extend(search_condition.include_tags.clone().unwrap());
                     }
 
                     let mut pipeline = vec![doc! {
@@ -255,13 +255,13 @@ pub mod handler {
                         }
                     });
 
-                    let pipeline_str = serde_json::to_string(&pipeline).unwrap();
+                    let search_hex = search_condition.toHex();
                     {
                         let cache =QUERY_CACHE.get().cloned().expect("QUERY_CACHE is not initialized");
                         let mut cache = cache.lock().await;
 
                         // 尝试获取给定key的缓存
-                        let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
+                        let entry = cache.entry(search_hex.clone()).or_insert_with(Vec::new);
 
                         if let Some(image_detail) = entry.pop() {
                             // 如果能从vec中移除一个项，则对`image`变量赋值
@@ -297,7 +297,7 @@ pub mod handler {
                                             let cache =QUERY_CACHE.get().cloned().expect("QUERY_CACHE is not initialized");
                                             let mut cache = cache.lock().await;
                                             // 确保不会与其他任务冲突地更新缓存
-                                            let entry = cache.entry(pipeline_str.clone()).or_insert_with(Vec::new);
+                                            let entry = cache.entry(search_hex.clone()).or_insert_with(Vec::new);
                                             entry.push(image_detail);
 
                                         }

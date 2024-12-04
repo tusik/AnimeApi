@@ -40,6 +40,18 @@ impl Reject for SearchError {
 }
 impl std::error::Error for SearchError {}
 impl SearchCondition{
+    pub fn toHex(&self)->String{
+        let mut hex = String::new();
+        hex.push_str("0x");
+        hex.push_str(&format!("{:x}",self.id.clone().unwrap_or(0)));
+        hex.push_str(&format!("{:x}",self.exclude_tags.clone().unwrap_or(Vec::new()).iter().fold(0,|acc,x|acc+x.len())));
+        hex.push_str(&format!("{:x}",self.include_tags.clone().unwrap_or(Vec::new()).iter().fold(0,|acc,x|acc+x.len())));
+        hex.push_str(&format!("{:x}",self.horizontal.clone().unwrap_or(false) as u8));
+        hex.push_str(&format!("{:x}",self.compress.clone().unwrap_or(true) as u8));
+        hex.push_str(&format!("{:x}",self.min_size));
+        hex.push_str(&format!("{:x}",self.max_size));
+        hex
+    }
     pub fn default()->Self{
         SearchCondition{
             id: None ,
