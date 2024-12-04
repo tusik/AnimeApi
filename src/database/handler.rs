@@ -210,8 +210,12 @@ pub mod handler {
                     }).flatten();
                 } else {
                     let mut nin:Vec<String> = vec![];
+                    let mut in_tag:Vec<String> = vec![];
                     if search_condition.exclude_tags.is_some() {
                         nin.extend(search_condition.exclude_tags.unwrap());
+                    }
+                    if search_condition.include_tags.is_some() {
+                        in_tag.extend(search_condition.include_tags.unwrap());
                     }
 
                     let mut pipeline = vec![doc! {
@@ -226,6 +230,13 @@ pub mod handler {
                             "tags":{"$nin":nin}
                         }
                     }];
+                    if in_tag.len() > 0 {
+                        pipeline.push(doc! {
+                            "$match":{
+                                "tags":{"$in":in_tag}
+                            }
+                        });
+                    }
                     match search_condition.horizontal {
                         Some(hor) => {
                             let hor_value;
