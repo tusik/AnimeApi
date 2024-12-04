@@ -1,7 +1,7 @@
 pub mod image_detail {
     use serde::Deserialize;
     use serde::Serialize;
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize, Default)]
     pub struct ImageDetail {
         pub(crate) file_url: String,
         pub(crate) file_size: usize,
